@@ -27,6 +27,10 @@ RiskLedger is an enterprise risk management (ERM) and compliance tool for mid-si
 
 ## Running it
 
+**Live demo:** https://ishtiaqrafique.github.io/riskledger/
+
+On a first visit the standalone version loads a **fictional sample organisation** (7 risks, 5 controls, actions, exceptions, audit findings, incidents and a partly assessed NIST CSF 2.0) from `sample-data.js`. Use **Reload sample data** or **Clear all data** in the banner to start again or start empty.
+
 **Option 1: open the file.** Double-click `index.html` (or `riskledger.html`). Records are saved in that browser's local storage, on that device only.
 
 **Option 2: GitHub Pages.** In the repository, go to *Settings → Pages*, choose *Deploy from a branch*, branch `main`, folder `/ (root)`. The app is then served at `https://<your-account>.github.io/<repo>/`. Records are still saved per browser.
@@ -51,6 +55,7 @@ See [docs/IMPORTING_FRAMEWORKS.md](docs/IMPORTING_FRAMEWORKS.md) for details.
 ```
 riskledger.html                    The whole app: HTML, CSS and JavaScript
 index.html                         Redirects to riskledger.html (for GitHub Pages)
+sample-data.js                     Fictional sample records loaded on a first visit (standalone only)
 data/nist-csf-2.0.json             NIST CSF 2.0 core (public domain)
 data/framework-import-template.csv Column layout for importing other frameworks
 docs/PRODUCT_PLAN.md               Roadmap and target architecture for the full product

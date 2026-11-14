@@ -52,6 +52,10 @@ main { padding-block: 24px 48px; padding-left: 28px; padding-right: max(28px, en
 .page-head h1 { font-family: var(--font-head); font-weight: 700; font-size: 26px; margin: 0; text-wrap: balance; }
 .page-head p { margin: 2px 0 0; color: var(--muted); max-width: 65ch; }
 .notice { padding: 10px 14px; border-radius: 8px; background: var(--surface-2); color: var(--muted); font-size: 13px; }
+.notice-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.notice-row > span:first-child { flex: 1 1 320px; min-width: 0; }
+.notice-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.notice-actions .btn { padding: 5px 12px; font-size: 12.5px; }
 
 .btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 6px; cursor: pointer; font-weight: 500; }
 .btn:hover { border-color: var(--muted); }
@@ -563,7 +567,8 @@ function renderMenu() {
 function noticeHtml() {
   const out = [];
   if (mode === "local") out.push(localSaved
-    ? `<div class="notice">Standalone mode: records are saved in this browser only, on this device. Other people can't see them. Use the shared claude.ai version, or the full product with a server, for team use.</div>`
+    ? `<div class="notice notice-row"><span>Demo mode: records are saved in this browser only, on this device, and nobody else can see them. ${state.risks.some(r => r.example) ? "You're looking at a fictional sample organisation." : ""}</span>
+        <span class="notice-actions"><button class="btn" type="button" data-sample="reload">Reload sample data</button><button class="btn danger" type="button" data-sample="clear">Clear all data</button></span></div>`
     : `<div class="notice">Shared storage isn't available in this view, so you're working in demo mode. Anything you add disappears when you close the page.</div>`);
   if (slowNote && mode === "live" && !KINDS.every(k => loaded[k])) out.push(`<div class="notice">Records are taking longer than usual to load. What you see may be incomplete; it updates by itself once the connection recovers.</div>`);
   if (!canWrite) out.push(`<div class="notice">You have view-only access to this page. Ask the owner for Contributor access in the Share menu to add or change records.</div>`);
@@ -1129,6 +1134,14 @@ function dbMessage(e) {
 /* ---------- Events ---------- */
 document.addEventListener("click", e => {
   const t = e.target;
+  const sb = t.closest("[data-sample]");
+  if (sb && mode === "local") {
+    // Both replace what is stored in this browser, so each asks for a second click
+    if (!sb.classList.contains("armed")) { sb.classList.add("armed"); sb.textContent = sb.dataset.sample === "clear" ? "Confirm: delete everything" : "Confirm: replace my data"; return; }
+    if (sb.dataset.sample === "clear") { KINDS.forEach(k => { state[k] = []; }); saveLocal(); render(); }
+    else loadSample(d => { if (d) applySample(d); else { sb.textContent = "Sample data isn't available here"; sb.disabled = true; } });
+    return;
+  }
   if (t.closest("[data-add-person]")) { openMember(null); return; }
   const mb = t.closest("[data-member]"); if (mb) { openMember(mb.dataset.member); return; }
   const pk = t.closest("[data-pick]"); if (pk && !pk.disabled) {
@@ -1236,9 +1249,27 @@ function saveLocal() {
 }
 function startLocal() {
   mode = "local";
-  try { const raw = localStorage.getItem(LOCAL_KEY); if (raw) { const d = JSON.parse(raw); KINDS.forEach(k => { if (Array.isArray(d[k])) state[k] = d[k]; }); } localSaved = true; } catch { localSaved = false; }
+  let raw = null;
+  try { raw = localStorage.getItem(LOCAL_KEY); if (raw) { const d = JSON.parse(raw); KINDS.forEach(k => { if (Array.isArray(d[k])) state[k] = d[k]; }); } localSaved = true; } catch { localSaved = false; }
   KINDS.forEach(k => { loaded[k] = true; });
   render();
+  // First visit: open with the fictional sample organisation so the demo isn't empty
+  if (!raw) loadSample(d => { if (d) applySample(d); });
+}
+// sample-data.js ships next to riskledger.html in the repository; it is not part of the claude.ai version
+function loadSample(cb) {
+  if (window.RISKLEDGER_SAMPLE) { cb(window.RISKLEDGER_SAMPLE); return; }
+  const s = document.createElement("script");
+  s.src = "sample-data.js";
+  s.onload = () => cb(window.RISKLEDGER_SAMPLE || null);
+  s.onerror = () => cb(null);
+  document.head.appendChild(s);
+}
+function applySample(d) {
+  KINDS.forEach(k => { state[k] = []; });
+  Object.keys(d).forEach(k => { if (state[k] && Array.isArray(d[k])) state[k] = JSON.parse(JSON.stringify(d[k])); });
+  state.frameworks = [{ id: "nist-csf-2", ...nistFramework(), importedAt: new Date().toISOString() }];
+  saveLocal(); render();
 }
 async function init() {
   render();
