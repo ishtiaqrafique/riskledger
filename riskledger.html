@@ -1,0 +1,1279 @@
+<title>RiskLedger ERM</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: app shell — left nav rail + working area; nav becomes a top strip on phones. */
+:root {
+  --bg: #F3F6FA; --surface: #FFFFFF; --surface-2: #EBF0F6; --ink: #142030; --muted: #5A6A7E;
+  --line: #D8E0EA; --accent: #2456C4; --accent-ink: #FFFFFF; --accent-soft: #E3EBFA;
+  --low: #23935F; --med: #C9950E; --high: #DB6A24; --crit: #CF3434;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --shadow: 0 10px 40px rgba(20, 32, 48, .18);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0D131B; --surface: #141C27; --surface-2: #1B2532; --ink: #E4EAF2; --muted: #90A0B4;
+  --line: #283445; --accent: #7AA2FF; --accent-ink: #0D131B; --accent-soft: #1E2B45;
+  --low: #3DBB82; --med: #E3B43A; --high: #F08A4B; --crit: #F06464; --shadow: 0 10px 40px rgba(0,0,0,.5);
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0D131B; --surface: #141C27; --surface-2: #1B2532; --ink: #E4EAF2; --muted: #90A0B4;
+  --line: #283445; --accent: #7AA2FF; --accent-ink: #0D131B; --accent-soft: #1E2B45;
+  --low: #3DBB82; --med: #E3B43A; --high: #F08A4B; --crit: #F06464; --shadow: 0 10px 40px rgba(0,0,0,.5);
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.45; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.shell { display: grid; grid-template-columns: 228px minmax(0, 1fr); min-height: 100%; }
+.rail { background: var(--surface); border-right: 1px solid var(--line); padding-block: 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: 16px; display: flex; flex-direction: column; gap: 24px; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark { width: 30px; height: 30px; border-radius: 7px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 4px; background: var(--surface-2); }
+.brand-mark i { border-radius: 2px; }
+.brand-name { font-family: var(--font-head); font-weight: 700; font-size: 18px; letter-spacing: .01em; }
+.brand-sub { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+nav.menu { display: flex; flex-direction: column; gap: 2px; }
+nav.menu a { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; font-weight: 500; }
+nav.menu a:hover { background: var(--surface-2); color: var(--ink); }
+nav.menu a.on { background: var(--accent-soft); color: var(--accent); }
+nav.menu .count { font-family: var(--font-mono); font-size: 12px; }
+.rail-foot { margin-top: auto; font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; }
+.status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--low); margin-right: 6px; vertical-align: 1px; }
+.status-dot.warn { background: var(--med); }
+
+main { padding-block: 24px 48px; padding-left: 28px; padding-right: max(28px, env(safe-area-inset-right, 0px)); min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.page-head h1 { font-family: var(--font-head); font-weight: 700; font-size: 26px; margin: 0; text-wrap: balance; }
+.page-head p { margin: 2px 0 0; color: var(--muted); max-width: 65ch; }
+.notice { padding: 10px 14px; border-radius: 8px; background: var(--surface-2); color: var(--muted); font-size: 13px; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 14px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--crit); }
+.btn.danger.armed { background: var(--crit); border-color: var(--crit); color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+
+/* KPI strip */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.kpi { background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.kpi .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.kpi .val { font-family: var(--font-head); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.kpi .sub { font-size: 12px; color: var(--muted); }
+.kpi.alert .val { color: var(--crit); }
+
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.panel h2 { font-family: var(--font-head); font-size: 17px; font-weight: 600; margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 5px 12px; cursor: pointer; font-size: 13px; color: var(--muted); }
+.seg button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+/* Heat map */
+.heat-wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
+.heat-y { writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.heat { display: grid; grid-template-columns: 92px repeat(5, minmax(0, 1fr)); gap: 4px; }
+.heat .ax { font-size: 11px; color: var(--muted); display: flex; align-items: center; line-height: 1.2; }
+.heat .ax.x { justify-content: center; text-align: center; padding-top: 4px; }
+.cell { aspect-ratio: 1.35; max-width: 100%; border: 0; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; font-family: var(--font-mono); }
+.cell .n { font-size: 18px; font-weight: 500; color: var(--ink); }
+.cell .s { position: absolute; top: 4px; left: 6px; font-size: 10px; color: var(--muted); }
+.cell.empty .n { opacity: 0; }
+.cell:hover { outline: 2px solid var(--ink); outline-offset: -2px; }
+.b-low { background: color-mix(in srgb, var(--low) 22%, var(--surface)); }
+.b-med { background: color-mix(in srgb, var(--med) 26%, var(--surface)); }
+.b-high { background: color-mix(in srgb, var(--high) 30%, var(--surface)); }
+.b-crit { background: color-mix(in srgb, var(--crit) 32%, var(--surface)); }
+.heat-x { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); grid-column: 2; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; }
+
+/* Score pill */
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px 2px 6px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.pill .sc { font-family: var(--font-mono); font-weight: 500; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.p-low { color: var(--low); background: color-mix(in srgb, var(--low) 13%, transparent); }
+.p-med { color: color-mix(in srgb, var(--med) 80%, var(--ink)); background: color-mix(in srgb, var(--med) 16%, transparent); }
+.p-high { color: var(--high); background: color-mix(in srgb, var(--high) 14%, transparent); }
+.p-crit { color: var(--crit); background: color-mix(in srgb, var(--crit) 14%, transparent); }
+.p-neutral { color: var(--muted); background: var(--surface-2); }
+.tag { display: inline-block; padding: 1px 7px; border-radius: 4px; background: var(--surface-2); color: var(--muted); font-size: 12px; white-space: nowrap; }
+.tag.warn { color: var(--crit); background: color-mix(in srgb, var(--crit) 12%, transparent); }
+.mono { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+
+/* Lists */
+.rows { display: flex; flex-direction: column; }
+.rowi { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.rowi:first-child { border-top: 0; }
+.rowi:hover .t { color: var(--accent); }
+.rowi .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rowi .meta { font-size: 12px; color: var(--muted); }
+.bars { display: flex; flex-direction: column; gap: 8px; }
+.bar { display: grid; grid-template-columns: 110px minmax(0, 1fr) 28px; gap: 10px; align-items: center; font-size: 13px; }
+.bar .track { height: 10px; background: var(--surface-2); border-radius: 5px; overflow: hidden; display: flex; }
+.bar .track i { height: 100%; }
+.bar .num { font-family: var(--font-mono); text-align: right; color: var(--muted); }
+.empty-note { color: var(--muted); font-size: 13px; padding: 6px 0; }
+
+/* Tables */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar input, .toolbar select { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 6px 10px; min-width: 0; }
+.toolbar input { flex: 1 1 220px; max-width: 320px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 500; }
+.chip button { border: 0; background: transparent; cursor: pointer; color: inherit; font-size: 14px; line-height: 1; padding: 0 4px; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 760px; }
+th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; font-variant-numeric: tabular-nums; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+tbody tr:last-child td { border-bottom: 0; }
+td.title { font-weight: 500; max-width: 340px; }
+td.title small { display: block; font-weight: 400; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
+.table-empty { padding: 28px; text-align: center; color: var(--muted); }
+
+/* Drawer */
+.scrim { position: fixed; inset: 0; background: rgba(10, 16, 24, .45); z-index: 20; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 100%); background: var(--surface); z-index: 21; box-shadow: var(--shadow); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.drawer header { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.drawer header h2 { font-family: var(--font-head); font-size: 19px; margin: 0; }
+.drawer .body { padding: 18px 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.drawer footer { padding: 14px 20px; border-top: 1px solid var(--line); display: flex; gap: 8px; flex-wrap: wrap; }
+.drawer footer .spacer { flex: 1; }
+.x { border: 0; background: transparent; font-size: 22px; cursor: pointer; color: var(--muted); line-height: 1; padding: 4px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label, .group-lbl { font-size: 12px; font-weight: 600; color: var(--muted); }
+.field input, .field select, .field textarea { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 10px; width: 100%; }
+.field textarea { min-height: 76px; resize: vertical; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.assess { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--surface-2); }
+.assess-head { display: flex; justify-content: space-between; align-items: center; }
+.checks { display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+.checks label { display: flex; gap: 8px; align-items: baseline; font-size: 13px; font-weight: 400; color: var(--ink); }
+.err { color: var(--crit); font-size: 13px; }
+
+/* People */
+.av { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; background: var(--surface-2); }
+.who { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); padding: 8px; margin: 0 -8px 6px; border-radius: 6px; }
+.who:hover { background: var(--surface-2); }
+.who span { display: flex; flex-direction: column; min-width: 0; }
+.who strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.person { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.person span { overflow: hidden; text-overflow: ellipsis; }
+.matrix td, .matrix th { text-align: center; }
+.matrix td:first-child, .matrix th:first-child { text-align: left; }
+.matrix table { min-width: 860px; }
+.matrix tbody tr { cursor: default; }
+.yes { color: var(--low); font-weight: 600; }
+.ro { color: var(--muted); font-size: 12px; }
+.pick-list { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; max-height: 240px; overflow-y: auto; }
+.pick-list:empty { display: none; }
+.pick { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 0; border-top: 1px solid var(--line); background: transparent; text-align: left; cursor: pointer; width: 100%; }
+.pick:first-child { border-top: 0; }
+.pick:hover, .pick.on { background: var(--accent-soft); }
+.pick small { color: var(--muted); margin-left: auto; font-size: 12px; }
+
+/* Compliance */
+.fw-tabs { flex-wrap: wrap; max-width: 100%; }
+.stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--surface-2); min-width: 0; }
+.stack i { height: 100%; }
+.comp-summary { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; }
+.big-pct { font-family: var(--font-head); font-size: 46px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.big-pct small { display: block; font-family: var(--font-body); font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 6px; }
+.grp-row { display: grid; grid-template-columns: minmax(0, 1.5fr) 36px minmax(0, 2fr) 44px; gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; cursor: pointer; background: transparent; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; width: 100%; }
+.grp-row:hover .gname { color: var(--accent); }
+.grp-row.on .gname { color: var(--accent); font-weight: 600; }
+.grp-row .num { font-family: var(--font-mono); color: var(--muted); text-align: right; }
+.req-box { background: var(--surface-2); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.req-box p { margin: 0; }
+.imp-section { border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.imp-section h3 { margin: 0; font-family: var(--font-head); font-size: 15px; }
+.imp-section p { margin: 0; color: var(--muted); font-size: 13px; }
+.preview { font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.fw-line { display: grid; grid-template-columns: minmax(0, 1fr) 48px; gap: 4px 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.fw-line:first-child { border-top: 0; }
+.fw-line[data-fw-go] { cursor: pointer; }
+.fw-line[data-fw-go]:hover strong { color: var(--accent); }
+.fw-line .num { font-family: var(--font-mono); text-align: right; }
+
+@media (max-width: 1080px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 820px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail { border-right: 0; border-bottom: 1px solid var(--line); padding-block: 12px; padding-right: max(16px, env(safe-area-inset-right, 0px)); gap: 10px; }
+  nav.menu { flex-direction: row; overflow-x: auto; gap: 4px; }
+  nav.menu a { white-space: nowrap; gap: 8px; }
+  .rail-foot { display: none; }
+  main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .heat { grid-template-columns: 64px repeat(5, minmax(0, 1fr)); }
+  .cell .s { display: none; }
+  .pair { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: no-preference) { .drawer { animation: slide .18s ease-out; } @keyframes slide { from { transform: translateX(24px); opacity: .6; } } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <i style="background:var(--med)"></i><i style="background:var(--high)"></i><i style="background:var(--crit)"></i>
+        <i style="background:var(--low)"></i><i style="background:var(--med)"></i><i style="background:var(--high)"></i>
+        <i style="background:var(--low)"></i><i style="background:var(--low)"></i><i style="background:var(--med)"></i>
+      </div>
+      <div><div class="brand-name">RiskLedger</div><div class="brand-sub">Enterprise risk</div></div>
+    </div>
+    <nav class="menu" id="menu"></nav>
+    <div class="rail-foot">
+      <div id="who"></div>
+      <div id="conn"><span class="status-dot warn"></span>Connecting…</div>
+      <div>Risk appetite: residual score ≤ 9</div>
+    </div>
+  </aside>
+  <main id="main"></main>
+</div>
+<div id="drawer-root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ---------- Reference data ---------- */
+const L_LABELS = ["", "Rare", "Unlikely", "Possible", "Likely", "Almost certain"];
+const I_LABELS = ["", "Insignificant", "Minor", "Moderate", "Major", "Severe"];
+const APPETITE = 9;
+const BAND_NAME = { low: "Low", med: "Medium", high: "High", crit: "Critical" };
+const band = s => s >= 16 ? "crit" : s >= 10 ? "high" : s >= 5 ? "med" : "low";
+const CATEGORIES = ["Strategic", "Operational", "Financial", "Compliance", "IT & Cyber", "Reputational", "Health & Safety"];
+
+const ENTITIES = {
+  risks: { prefix: "R", one: "risk", title: "Risk register", fields: [
+    { k: "title", label: "Risk title", type: "text", req: true },
+    { k: "description", label: "Description (cause → event → consequence)", type: "textarea" },
+    { pair: [{ k: "category", label: "Category", type: "select", opts: CATEGORIES }, { k: "owner", label: "Risk owner", type: "text" }] },
+    { assess: "inherent", label: "Inherent risk (before controls)" },
+    { assess: "residual", label: "Residual risk (after controls)" },
+    { pair: [{ k: "treatment", label: "Treatment", type: "select", opts: ["Mitigate", "Accept", "Transfer", "Avoid"] },
+             { k: "status", label: "Status", type: "select", opts: ["Open", "In treatment", "Monitoring", "Closed"] }] },
+    { k: "reviewDate", label: "Next review", type: "date" },
+    { k: "controlIds", label: "Linked controls", type: "controls" },
+  ]},
+  controls: { prefix: "C", one: "control", title: "Control library", fields: [
+    { k: "name", label: "Control name", type: "text", req: true },
+    { k: "description", label: "How the control works", type: "textarea" },
+    { pair: [{ k: "type", label: "Type", type: "select", opts: ["Preventive", "Detective", "Corrective", "Directive"] },
+             { k: "nature", label: "Nature", type: "select", opts: ["Manual", "Automated", "IT-dependent manual"] }] },
+    { pair: [{ k: "owner", label: "Control owner", type: "text" },
+             { k: "frequency", label: "Frequency", type: "select", opts: ["Continuous", "Daily", "Weekly", "Monthly", "Quarterly", "Annually", "Ad hoc"] }] },
+    { pair: [{ k: "lastTested", label: "Last tested", type: "date" },
+             { k: "result", label: "Test result", type: "select", opts: ["Not tested", "Effective", "Partially effective", "Ineffective"] }] },
+  ]},
+  actions: { prefix: "A", one: "action", title: "Treatment actions", fields: [
+    { k: "title", label: "Action", type: "text", req: true },
+    { k: "riskId", label: "Risk being treated", type: "risk" },
+    { pair: [{ k: "owner", label: "Action owner", type: "text" }, { k: "dueDate", label: "Due date", type: "date" }] },
+    { k: "status", label: "Status", type: "select", opts: ["Not started", "In progress", "Done"] },
+    { k: "notes", label: "Progress notes", type: "textarea" },
+  ]},
+  exceptions: { prefix: "E", one: "exception", title: "Risk exception register", fields: [
+    { k: "title", label: "Exception", type: "text", req: true },
+    { k: "riskId", label: "Risk being accepted", type: "risk" },
+    { k: "justification", label: "Business justification (why the risk can't be treated now)", type: "textarea" },
+    { pair: [{ k: "requestedBy", label: "Requested by", type: "text" }, { k: "approver", label: "Approver", type: "text" }] },
+    { pair: [{ k: "status", label: "Status", type: "select", opts: ["Requested", "Approved", "Rejected", "Closed"] },
+             { k: "approvedOn", label: "Approved on", type: "date" }] },
+    { pair: [{ k: "startDate", label: "Valid from", type: "date" }, { k: "expiryDate", label: "Expires on", type: "date" }] },
+    { k: "conditions", label: "Conditions of acceptance", type: "textarea" },
+    { k: "controlIds", label: "Compensating controls", type: "controls" },
+  ]},
+  incidents: { prefix: "I", one: "incident", title: "Incidents & loss events", fields: [
+    { k: "title", label: "Incident", type: "text", req: true },
+    { k: "description", label: "What happened", type: "textarea" },
+    { pair: [{ k: "date", label: "Date occurred", type: "date" },
+             { k: "severity", label: "Severity", type: "select", opts: ["Low", "Medium", "High", "Critical"] }] },
+    { k: "riskId", label: "Related risk", type: "risk" },
+    { pair: [{ k: "loss", label: "Financial loss (amount)", type: "number" },
+             { k: "status", label: "Status", type: "select", opts: ["Open", "Investigating", "Closed"] }] },
+  ]},
+};
+/* ---------- Compliance & audit reference data ---------- */
+const FINDING_SOURCES = ["Internal audit", "External audit", "Regulator", "Certification body", "Self-assessment"];
+const FINDING_STATUS = ["Open", "In remediation", "Ready for verification", "Closed", "Risk accepted"];
+const isExternal = s => ["External audit", "Regulator", "Certification body"].includes(s);
+const findingOpen = f => !["Closed", "Risk accepted"].includes(f.status || "Open");
+const findingOverdue = f => findingOpen(f) && f.dueDate && f.dueDate < todayStr;
+const SEV_CLS = { Low: "p-low", Medium: "p-med", High: "p-high", Critical: "p-crit" };
+const REQ_STATUSES = ["Compliant", "Partially compliant", "Non-compliant", "Not applicable", "Not assessed"];
+const ST_CLS = { "Compliant": "p-low", "Partially compliant": "p-med", "Non-compliant": "p-crit", "Not applicable": "p-neutral", "Not assessed": "p-neutral" };
+const ST_COLOR = { "Compliant": "var(--low)", "Partially compliant": "var(--med)", "Non-compliant": "var(--crit)", "Not applicable": "var(--muted)", "Not assessed": "var(--line)" };
+
+ENTITIES.findings = { prefix: "F", one: "finding", title: "Audit findings", fields: [
+  { k: "title", label: "Finding", type: "text", req: true },
+  { k: "description", label: "Condition observed", type: "textarea" },
+  { pair: [{ k: "source", label: "Source", type: "select", opts: FINDING_SOURCES }, { k: "audit", label: "Audit / engagement name", type: "text" }] },
+  { pair: [{ k: "auditor", label: "Raised by (auditor or firm)", type: "text" }, { k: "dateRaised", label: "Date raised", type: "date" }] },
+  { pair: [{ k: "severity", label: "Severity", type: "select", opts: ["Low", "Medium", "High", "Critical"] }, { k: "status", label: "Status", type: "select", opts: FINDING_STATUS }] },
+  { k: "reqKey", label: "Compliance requirement", type: "requirement" },
+  { k: "riskId", label: "Related risk", type: "risk" },
+  { pair: [{ k: "owner", label: "Remediation owner", type: "text" }, { k: "dueDate", label: "Agreed due date", type: "date" }] },
+  { k: "response", label: "Management response and remediation plan", type: "textarea" },
+]};
+ENTITIES.assessments = { prefix: "", one: "assessment", fields: [
+  { k: "status", label: "Compliance status", type: "select", opts: ["Not assessed", "Compliant", "Partially compliant", "Non-compliant", "Not applicable"] },
+  { pair: [{ k: "owner", label: "Requirement owner", type: "text" }, { k: "lastAssessed", label: "Last assessed", type: "date" }] },
+  { k: "evidence", label: "Evidence and notes", type: "textarea" },
+  { k: "controlIds", label: "Mapped controls", type: "controls" },
+]};
+const KINDS = [...Object.keys(ENTITIES), "frameworks", "members", "visitors"];
+
+/* ---------- Roles ---------- */
+const MODULES = [["risks", "Risks"], ["controls", "Controls"], ["actions", "Actions"], ["exceptions", "Exceptions"], ["assessments", "Compliance assessments"], ["frameworks", "Frameworks"], ["findings", "Audit findings"], ["incidents", "Incidents"], ["members", "Users & roles"]];
+const ROLES = {
+  "Admin": { desc: "Full access, including users and roles", edit: MODULES.map(m => m[0]) },
+  "Risk manager": { desc: "Runs the risk and compliance programme across every register", edit: ["risks", "controls", "actions", "exceptions", "assessments", "frameworks", "findings", "incidents"] },
+  "Risk owner": { desc: "Maintains their risks, treatment actions, exception requests and incidents", edit: ["risks", "actions", "exceptions", "incidents"] },
+  "Control owner": { desc: "Maintains controls, compliance assessments and remediation actions", edit: ["controls", "assessments", "actions"] },
+  "Auditor": { desc: "Records internal and external audit findings; reads everything", edit: ["findings"] },
+  "Viewer": { desc: "Read-only access to dashboards and registers (executives, board)", edit: [] },
+};
+const ROLE_NAMES = Object.keys(ROLES);
+
+/* NIST Cybersecurity Framework 2.0 core (US Government work, public domain) */
+const NIST_FUNCS = { GV: "Govern", ID: "Identify", PR: "Protect", DE: "Detect", RS: "Respond", RC: "Recover" };
+const NIST_CATS = { "GV.OC": "Organizational Context", "GV.RM": "Risk Management Strategy", "GV.RR": "Roles, Responsibilities, and Authorities", "GV.PO": "Policy", "GV.OV": "Oversight", "GV.SC": "Cybersecurity Supply Chain Risk Management",
+  "ID.AM": "Asset Management", "ID.RA": "Risk Assessment", "ID.IM": "Improvement", "PR.AA": "Identity Management, Authentication, and Access Control", "PR.AT": "Awareness and Training", "PR.DS": "Data Security", "PR.PS": "Platform Security", "PR.IR": "Technology Infrastructure Resilience",
+  "DE.CM": "Continuous Monitoring", "DE.AE": "Adverse Event Analysis", "RS.MA": "Incident Management", "RS.AN": "Incident Analysis", "RS.CO": "Incident Response Reporting and Communication", "RS.MI": "Incident Mitigation", "RC.RP": "Incident Recovery Plan Execution", "RC.CO": "Incident Recovery Communication" };
+const NIST_TEXT = `GV.OC-01|The organizational mission is understood and informs cybersecurity risk management
+GV.OC-02|Internal and external stakeholders are understood, and their needs and expectations regarding cybersecurity risk management are understood and considered
+GV.OC-03|Legal, regulatory, and contractual requirements regarding cybersecurity, including privacy and civil liberties obligations, are understood and managed
+GV.OC-04|Critical objectives, capabilities, and services that external stakeholders depend on or expect from the organization are understood and communicated
+GV.OC-05|Outcomes, capabilities, and services that the organization depends on are understood and communicated
+GV.RM-01|Risk management objectives are established and agreed to by organizational stakeholders
+GV.RM-02|Risk appetite and risk tolerance statements are established, communicated, and maintained
+GV.RM-03|Cybersecurity risk management activities and outcomes are included in enterprise risk management processes
+GV.RM-04|Strategic direction that describes appropriate risk response options is established and communicated
+GV.RM-05|Lines of communication across the organization are established for cybersecurity risks, including risks from suppliers and other third parties
+GV.RM-06|A standardized method for calculating, documenting, categorizing, and prioritizing cybersecurity risks is established and communicated
+GV.RM-07|Strategic opportunities (i.e., positive risks) are characterized and are included in organizational cybersecurity risk discussions
+GV.RR-01|Organizational leadership is responsible and accountable for cybersecurity risk and fosters a culture that is risk-aware, ethical, and continually improving
+GV.RR-02|Roles, responsibilities, and authorities related to cybersecurity risk management are established, communicated, understood, and enforced
+GV.RR-03|Adequate resources are allocated commensurate with the cybersecurity risk strategy, roles, responsibilities, and policies
+GV.RR-04|Cybersecurity is included in human resources practices
+GV.PO-01|Policy for managing cybersecurity risks is established based on organizational context, cybersecurity strategy, and priorities and is communicated and enforced
+GV.PO-02|Policy for managing cybersecurity risks is reviewed, updated, communicated, and enforced to reflect changes in requirements, threats, technology, and organizational mission
+GV.OV-01|Cybersecurity risk management strategy outcomes are reviewed to inform and adjust strategy and direction
+GV.OV-02|The cybersecurity risk management strategy is reviewed and adjusted to ensure coverage of organizational requirements and risks
+GV.OV-03|Organizational cybersecurity risk management performance is evaluated and reviewed for adjustments needed
+GV.SC-01|A cybersecurity supply chain risk management program, strategy, objectives, policies, and processes are established and agreed to by organizational stakeholders
+GV.SC-02|Cybersecurity roles and responsibilities for suppliers, customers, and partners are established, communicated, and coordinated internally and externally
+GV.SC-03|Cybersecurity supply chain risk management is integrated into cybersecurity and enterprise risk management, risk assessment, and improvement processes
+GV.SC-04|Suppliers are known and prioritized by criticality
+GV.SC-05|Requirements to address cybersecurity risks in supply chains are established, prioritized, and integrated into contracts and other types of agreements with suppliers and other relevant third parties
+GV.SC-06|Planning and due diligence are performed to reduce risks before entering into formal supplier or other third-party relationships
+GV.SC-07|The risks posed by a supplier, their products and services, and other third parties are understood, recorded, prioritized, assessed, responded to, and monitored over the course of the relationship
+GV.SC-08|Relevant suppliers and other third parties are included in incident planning, response, and recovery activities
+GV.SC-09|Supply chain security practices are integrated into cybersecurity and enterprise risk management programs, and their performance is monitored throughout the technology product and service life cycle
+GV.SC-10|Cybersecurity supply chain risk management plans include provisions for activities that occur after the conclusion of a partnership or service agreement
+ID.AM-01|Inventories of hardware managed by the organization are maintained
+ID.AM-02|Inventories of software, services, and systems managed by the organization are maintained
+ID.AM-03|Representations of the organization's authorized network communication and internal and external network data flows are maintained
+ID.AM-04|Inventories of services provided by suppliers are maintained
+ID.AM-05|Assets are prioritized based on classification, criticality, resources, and impact on the mission
+ID.AM-07|Inventories of data and corresponding metadata for designated data types are maintained
+ID.AM-08|Systems, hardware, software, services, and data are managed throughout their life cycles
+ID.RA-01|Vulnerabilities in assets are identified, validated, and recorded
+ID.RA-02|Cyber threat intelligence is received from information sharing forums and sources
+ID.RA-03|Internal and external threats to the organization are identified and recorded
+ID.RA-04|Potential impacts and likelihoods of threats exploiting vulnerabilities are identified and recorded
+ID.RA-05|Threats, vulnerabilities, likelihoods, and impacts are used to understand inherent risk and inform risk response prioritization
+ID.RA-06|Risk responses are chosen, prioritized, planned, tracked, and communicated
+ID.RA-07|Changes and exceptions are managed, assessed for risk impact, recorded, and tracked
+ID.RA-08|Processes for receiving, analyzing, and responding to vulnerability disclosures are established
+ID.RA-09|The authenticity and integrity of hardware and software are assessed prior to acquisition and use
+ID.RA-10|Critical suppliers are assessed prior to acquisition
+ID.IM-01|Improvements are identified from evaluations
+ID.IM-02|Improvements are identified from security tests and exercises, including those done in coordination with suppliers and relevant third parties
+ID.IM-03|Improvements are identified from execution of operational processes, procedures, and activities
+ID.IM-04|Incident response plans and other cybersecurity plans that affect operations are established, communicated, maintained, and improved
+PR.AA-01|Identities and credentials for authorized users, services, and hardware are managed by the organization
+PR.AA-02|Identities are proofed and bound to credentials based on the context of interactions
+PR.AA-03|Users, services, and hardware are authenticated
+PR.AA-04|Identity assertions are protected, conveyed, and verified
+PR.AA-05|Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties
+PR.AA-06|Physical access to assets is managed, monitored, and enforced commensurate with risk
+PR.AT-01|Personnel are provided with awareness and training so that they possess the knowledge and skills to perform general tasks with cybersecurity risks in mind
+PR.AT-02|Individuals in specialized roles are provided with awareness and training so that they possess the knowledge and skills to perform relevant tasks with cybersecurity risks in mind
+PR.DS-01|The confidentiality, integrity, and availability of data-at-rest are protected
+PR.DS-02|The confidentiality, integrity, and availability of data-in-transit are protected
+PR.DS-10|The confidentiality, integrity, and availability of data-in-use are protected
+PR.DS-11|Backups of data are created, protected, maintained, and tested
+PR.PS-01|Configuration management practices are established and applied
+PR.PS-02|Software is maintained, replaced, and removed commensurate with risk
+PR.PS-03|Hardware is maintained, replaced, and removed commensurate with risk
+PR.PS-04|Log records are generated and made available for continuous monitoring
+PR.PS-05|Installation and execution of unauthorized software are prevented
+PR.PS-06|Secure software development practices are integrated, and their performance is monitored throughout the software development life cycle
+PR.IR-01|Networks and environments are protected from unauthorized logical access and usage
+PR.IR-02|The organization's technology assets are protected from environmental threats
+PR.IR-03|Mechanisms are implemented to achieve resilience requirements in normal and adverse situations
+PR.IR-04|Adequate resource capacity to ensure availability is maintained
+DE.CM-01|Networks and network services are monitored to find potentially adverse events
+DE.CM-02|The physical environment is monitored to find potentially adverse events
+DE.CM-03|Personnel activity and technology usage are monitored to find potentially adverse events
+DE.CM-06|External service provider activities and services are monitored to find potentially adverse events
+DE.CM-09|Computing hardware and software, runtime environments, and their data are monitored to find potentially adverse events
+DE.AE-02|Potentially adverse events are analyzed to better understand associated activities
+DE.AE-03|Information is correlated from multiple sources
+DE.AE-04|The estimated impact and scope of adverse events are understood
+DE.AE-06|Information on adverse events is provided to authorized staff and tools
+DE.AE-07|Cyber threat intelligence and other contextual information are integrated into the analysis
+DE.AE-08|Incidents are declared when adverse events meet the defined incident criteria
+RS.MA-01|The incident response plan is executed in coordination with relevant third parties once an incident is declared
+RS.MA-02|Incident reports are triaged and validated
+RS.MA-03|Incidents are categorized and prioritized
+RS.MA-04|Incidents are escalated or elevated as needed
+RS.MA-05|The criteria for initiating incident recovery are applied
+RS.AN-03|Analysis is performed to establish what has taken place during an incident and the root cause of the incident
+RS.AN-06|Actions performed during an investigation are recorded, and the records' integrity and provenance are preserved
+RS.AN-07|Incident data and metadata are collected, and their integrity and provenance are preserved
+RS.AN-08|An incident's magnitude is estimated and validated
+RS.CO-02|Internal and external stakeholders are notified of incidents
+RS.CO-03|Information is shared with designated internal and external stakeholders
+RS.MI-01|Incidents are contained
+RS.MI-02|Incidents are eradicated
+RC.RP-01|The recovery portion of the incident response plan is executed once initiated from the incident response process
+RC.RP-02|Recovery actions are selected, scoped, prioritized, and performed
+RC.RP-03|The integrity of backups and other restoration assets is verified before using them for restoration
+RC.RP-04|Critical mission functions and cybersecurity risk management are considered to establish post-incident operational norms
+RC.RP-05|The integrity of restored assets is verified, systems and services are restored, and normal operating status is confirmed
+RC.RP-06|The end of incident recovery is declared based on criteria, and incident-related documentation is completed
+RC.CO-03|Recovery activities and progress in restoring operational capabilities are communicated to designated internal and external stakeholders
+RC.CO-04|Public updates on incident recovery are shared using approved methods and messaging`;
+function nistFramework() {
+  const requirements = NIST_TEXT.split("\n").map(line => {
+    const [code, title] = line.split("|"); const cat = code.split("-")[0];
+    return { code, title, group: cat.split(".")[0], category: `${cat} · ${NIST_CATS[cat]}`, description: "", level: "" };
+  });
+  const groups = Object.fromEntries(Object.entries(NIST_FUNCS).map(([k, v]) => [k, `${k} · ${v}`]));
+  return { name: "NIST CSF 2.0", version: "2.0", source: "Built in: NIST Cybersecurity Framework 2.0 core (public domain)", groups, requirements };
+}
+
+/* ---------- State ---------- */
+const state = {}, loaded = {};
+KINDS.forEach(k => { state[k] = []; loaded[k] = false; });
+let db = null, mode = "connecting", canWrite = true, slowNote = false;
+let userNs = null, formKind = "";
+const me = { id: null, isOwner: false, canEdit: false, name: "", avatarUrl: "" };
+const people = {}; // id -> Profile, display only; never stored
+// Role resolution: the owner is always Admin; before any roles are assigned everyone with write access is Admin (setup mode)
+function myMember() { return me.id ? state.members.find(m => m.id === me.id) : null; }
+function myRole() {
+  if (mode === "local" || me.isOwner) return "Admin";
+  const m = myMember();
+  if (m) return m.active === false ? "Viewer" : (ROLES[m.role] ? m.role : "Viewer");
+  return state.members.length ? "Viewer" : (loaded.members ? "Admin" : "Viewer");
+}
+const setupMode = () => mode !== "local" && loaded.members && !state.members.length;
+const canDo = kind => canWrite && ROLES[myRole()].edit.includes(kind);
+const canManageUsers = () => canDo("members") && (mode === "local" || me.canEdit || me.isOwner);
+async function ensureProfiles(ids) {
+  if (!userNs) return;
+  const want = [...new Set(ids.filter(Boolean))];
+  if (!want.length) return;
+  const missing = want.filter(id => !people[id]);
+  try { const ps = await userNs.profiles(want); Object.assign(people, ps); } catch {}
+  if (missing.length) render();
+}
+const personName = id => (people[id] && people[id].name) || (id && id === me.id ? (me.name || "You") : "Someone");
+const avatar = id => `<img class="av" alt="" src="${esc((people[id] && people[id].avatarUrl) || (id === me.id ? me.avatarUrl : "") || "data:image/gif;base64,R0lGODlhAQABAAAAACw=")}">`;
+const ui = { heatBasis: "residual", q: "", cat: "", status: "", band: "", cell: null, fw: "", grp: "", cst: "", lvl: "", src: "", sev: "" };
+
+/* ---------- Helpers ---------- */
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
+const fmtDate = s => { if (!s) return "—"; const [y, m, d] = s.split("-").map(Number); if (!y) return "—"; return new Date(y, m - 1, d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); };
+const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+const score = (r, basis) => num(r[basis + "L"]) * num(r[basis + "I"]);
+const pill = s => s ? `<span class="pill p-${band(s)}"><span class="sc">${s}</span>${BAND_NAME[band(s)]}</span>` : `<span class="pill p-neutral">Not rated</span>`;
+const byId = (kind, id) => state[kind].find(x => x.id === id);
+const riskRef = id => { const r = byId("risks", id); return r ? `${esc(r.ref)} ${esc(r.title)}` : "—"; };
+const actionOverdue = a => a.status !== "Done" && a.dueDate && a.dueDate < todayStr;
+const reviewOverdue = r => r.status !== "Closed" && r.reviewDate && r.reviewDate < todayStr;
+const soonStr = (() => { const d = new Date(); d.setDate(d.getDate() + 30); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
+// Effective state of an exception: an approved one past its expiry date counts as expired
+const exState = e => e.status === "Approved" && e.expiryDate && e.expiryDate < todayStr ? "Expired" : (e.status || "Requested");
+const exActive = e => exState(e) === "Approved";
+const exExpiringSoon = e => exActive(e) && e.expiryDate && e.expiryDate <= soonStr;
+const EX_CLS = { Approved: "p-low", Requested: "p-med", Expired: "p-crit", Rejected: "p-neutral", Closed: "p-neutral" };
+const refNum =s => Number(String(s || "").split("-")[1]) || 0;
+const nextRef = kind => `${ENTITIES[kind].prefix}-${String(state[kind].reduce((m, x) => Math.max(m, refNum(x.ref)), 0) + 1).padStart(3, "0")}`;
+const sortRefs = (a, b) => refNum(a.ref) - refNum(b.ref);
+const trunc = (s, n) => { s = String(s || ""); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
+// Requirements are addressed as "<frameworkId>~<code>"; assessments use that as their document id
+const reqDocKey = (fwId, code) => `${fwId}~${String(code).replace(/[^A-Za-z0-9_\-.~:@+]/g, "_")}`;
+function findReq(key) {
+  const i = String(key || "").indexOf("~"); if (i < 0) return null;
+  const fw = byId("frameworks", key.slice(0, i)); if (!fw) return null;
+  const r = (fw.requirements || []).find(x => reqDocKey(fw.id, x.code) === key);
+  return r ? { fw, r } : null;
+}
+function reqLabel(key, short) {
+  const f = findReq(key);
+  if (!f) return String(key || "").split("~")[1] || "—";
+  return `${f.fw.name} ${f.r.code}${short ? "" : " " + trunc(f.r.title, 80)}`;
+}
+const assessMap = () => Object.fromEntries(state.assessments.map(a => [a.id, a]));
+function stats(statusList) {
+  const c = Object.fromEntries(REQ_STATUSES.map(s => [s, 0]));
+  statusList.forEach(s => { c[s] = (c[s] || 0) + 1; });
+  const total = statusList.length, applicable = total - c["Not applicable"];
+  const pct = applicable ? Math.round(100 * (c["Compliant"] + 0.5 * c["Partially compliant"]) / applicable) : null;
+  return { c, total, applicable, pct, assessed: total - c["Not assessed"] };
+}
+const stackBar = (s) => `<div class="stack" role="img" aria-label="${REQ_STATUSES.map(k => `${k} ${s.c[k]}`).join(", ")}">${REQ_STATUSES.map(k => s.c[k] ? `<i style="flex:${s.c[k]};background:${ST_COLOR[k]}" title="${k}: ${s.c[k]}"></i>` : "").join("")}</div>`;
+function fwStatus(fw, A) { return (fw.requirements || []).map(r => (A[reqDocKey(fw.id, r.code)] || {}).status || "Not assessed"); }
+
+/* ---------- Routing ---------- */
+const ROUTES = ["dashboard", "risks", "controls", "actions", "exceptions", "compliance", "findings", "incidents", "users"];
+const route = () => { const h = location.hash.slice(1); return ROUTES.includes(h) ? h : "dashboard"; };
+
+/* ---------- Rendering ---------- */
+function renderMenu() {
+  const r = route();
+  const items = [["dashboard", "Dashboard", ""], ["risks", "Risk register", state.risks.length], ["controls", "Controls", state.controls.length],
+    ["actions", "Actions", state.actions.filter(a => a.status !== "Done").length],
+    ["exceptions", "Exceptions", state.exceptions.filter(e => ["Approved", "Requested"].includes(exState(e))).length],
+    ["compliance", "Compliance", state.frameworks.length], ["findings", "Audit findings", state.findings.filter(findingOpen).length], ["incidents", "Incidents", state.incidents.filter(i => i.status !== "Closed").length],
+    ["users", "Users & roles", state.members.filter(m => m.active !== false).length || ""]];
+  document.getElementById("menu").innerHTML = items.map(([k, label, c]) =>
+    `<a href="#${k}" class="${r === k ? "on" : ""}">${label}<span class="count">${c === "" ? "" : c}</span></a>`).join("");
+  const conn = document.getElementById("conn");
+  conn.innerHTML = mode === "live" ? `<span class="status-dot"></span>Saved to shared workspace`
+    : mode === "local" ? (localSaved ? `<span class="status-dot"></span>Saved in this browser` : `<span class="status-dot warn"></span>Demo mode: changes not saved`)
+    : `<span class="status-dot warn"></span>Connecting…`;
+  const who = document.getElementById("who");
+  if (who) who.innerHTML = mode === "local" ? "" : `<a href="#users" class="who">${me.id ? avatar(me.id) : ""}<span><strong>${esc(me.id ? personName(me.id) : "Signed out")}</strong><span class="meta">${esc(myRole())}${me.isOwner ? " · owner" : ""}</span></span></a>`;
+}
+
+function noticeHtml() {
+  const out = [];
+  if (mode === "local") out.push(localSaved
+    ? `<div class="notice">Standalone mode: records are saved in this browser only, on this device. Other people can't see them. Use the shared claude.ai version, or the full product with a server, for team use.</div>`
+    : `<div class="notice">Shared storage isn't available in this view, so you're working in demo mode. Anything you add disappears when you close the page.</div>`);
+  if (slowNote && mode === "live" && !KINDS.every(k => loaded[k])) out.push(`<div class="notice">Records are taking longer than usual to load. What you see may be incomplete; it updates by itself once the connection recovers.</div>`);
+  if (!canWrite) out.push(`<div class="notice">You have view-only access to this page. Ask the owner for Contributor access in the Share menu to add or change records.</div>`);
+  else if (myMember() && myMember().active === false) out.push(`<div class="notice">Your RiskLedger account is deactivated, so you can only view records. Ask an admin to reactivate it.</div>`);
+  else if (setupMode() && route() !== "users") out.push(`<div class="notice">Roles aren't set up yet, so everyone who can edit this page has full access. <a href="#users">Assign roles on the Users page</a>.</div>`);
+  return out.join("");
+}
+
+function render() {
+  renderMenu();
+  const r = route();
+  const main = document.getElementById("main");
+  main.innerHTML = noticeHtml() + (r === "dashboard" ? dashboardHtml() : r === "compliance" ? complianceHtml() : r === "users" ? usersHtml() : listHtml(r));
+  // Resolve names for people shown on screen (members, recent visitors, me)
+  if (userNs) ensureProfiles([me.id, ...state.members.map(m => m.id), ...(r === "users" ? state.visitors.map(v => v.id) : [])]);
+}
+
+function dashboardHtml() {
+  const open = state.risks.filter(r => r.status !== "Closed");
+  const hiRes = open.filter(r => score(r, "residual") >= 10).length;
+  const above = open.filter(r => score(r, "residual") > APPETITE).length;
+  const overdue = state.actions.filter(actionOverdue).length;
+  const tested = state.controls.filter(c => c.result && c.result !== "Not tested");
+  const eff = tested.length ? Math.round(100 * tested.filter(c => c.result === "Effective").length / tested.length) : null;
+  const openInc = state.incidents.filter(i => i.status !== "Closed");
+  const loss = state.incidents.reduce((s, i) => s + num(i.loss), 0);
+  const exList = { active: state.exceptions.filter(exActive).length, soon: state.exceptions.filter(exExpiringSoon).length,
+    expired: state.exceptions.filter(e => exState(e) === "Expired").length };
+  const openF = state.findings.filter(findingOpen), overdueF = openF.filter(findingOverdue).length, extF = openF.filter(f => isExternal(f.source)).length;
+
+  const kpis = `<div class="kpis">
+    <div class="kpi"><span class="lbl">Open risks</span><span class="val">${open.length}</span><span class="sub">${state.risks.length - open.length} closed</span></div>
+    <div class="kpi ${hiRes ? "alert" : ""}"><span class="lbl">High / critical</span><span class="val">${hiRes}</span><span class="sub">residual score ≥ 10</span></div>
+    <div class="kpi ${above ? "alert" : ""}"><span class="lbl">Above appetite</span><span class="val">${above}</span><span class="sub">residual &gt; ${APPETITE}</span></div>
+    <div class="kpi ${overdue ? "alert" : ""}"><span class="lbl">Overdue actions</span><span class="val">${overdue}</span><span class="sub">${state.actions.filter(a => a.status !== "Done").length} still open</span></div>
+    <div class="kpi"><span class="lbl">Controls effective</span><span class="val">${eff === null ? "—" : eff + "%"}</span><span class="sub">${tested.length} of ${state.controls.length} tested</span></div>
+    <div class="kpi ${exList.expired ? "alert" : ""}"><span class="lbl">Active exceptions</span><span class="val">${exList.active}</span><span class="sub">${exList.expired ? `${exList.expired} expired · ` : ""}${exList.soon} expire in 30 days</span></div>
+    <div class="kpi ${overdueF ? "alert" : ""}"><span class="lbl">Open audit findings</span><span class="val">${openF.length}</span><span class="sub">${overdueF} overdue · ${extF} external</span></div>
+    <div class="kpi"><span class="lbl">Open incidents</span><span class="val">${openInc.length}</span><span class="sub">${loss.toLocaleString()} total loss</span></div>
+  </div>`;
+
+  // Heat map: rows impact 5→1, columns likelihood 1→5
+  const counts = {};
+  open.forEach(r => { const l = num(r[ui.heatBasis + "L"]), i = num(r[ui.heatBasis + "I"]); if (l && i) counts[l + "-" + i] = (counts[l + "-" + i] || 0) + 1; });
+  let cells = "";
+  for (let i = 5; i >= 1; i--) {
+    cells += `<div class="ax">${i} · ${I_LABELS[i]}</div>`;
+    for (let l = 1; l <= 5; l++) {
+      const n = counts[l + "-" + i] || 0, s = l * i;
+      cells += `<button class="cell b-${band(s)} ${n ? "" : "empty"}" data-cell="${l}-${i}" aria-label="Likelihood ${l}, impact ${i}: ${n} risks"><span class="s">${s}</span><span class="n">${n}</span></button>`;
+    }
+  }
+  cells += `<div></div>` + [1, 2, 3, 4, 5].map(l => `<div class="ax x">${l}<br>${L_LABELS[l]}</div>`).join("");
+  const heat = `<section class="panel">
+    <div class="panel-head"><h2>Risk heat map</h2>
+      <div class="seg" role="group" aria-label="Score basis">
+        <button data-basis="inherent" class="${ui.heatBasis === "inherent" ? "on" : ""}">Inherent</button>
+        <button data-basis="residual" class="${ui.heatBasis === "residual" ? "on" : ""}">Residual</button></div></div>
+    <div class="heat-wrap"><div class="heat-y">Impact</div><div class="heat">${cells}</div><div></div><div class="heat-x">Likelihood</div></div>
+    <div class="legend"><span><i class="b-low"></i>Low 1–4</span><span><i class="b-med"></i>Medium 5–9</span><span><i class="b-high"></i>High 10–15</span><span><i class="b-crit"></i>Critical 16–25</span><span>Click a cell to see its risks</span></div>
+  </section>`;
+
+  const top = [...open].sort((a, b) => score(b, "residual") - score(a, "residual")).slice(0, 6);
+  const topHtml = `<section class="panel"><div class="panel-head"><h2>Top residual risks</h2><a href="#risks" class="mono">View register →</a></div>
+    <div class="rows">${top.length ? top.map(r => `<div class="rowi" data-open="risks:${r.id}"><span class="mono">${esc(r.ref)}</span>
+      <div style="min-width:0"><div class="t">${esc(r.title)}</div><div class="meta">${esc(r.category || "Uncategorised")} · ${esc(r.owner || "No owner")}</div></div>${pill(score(r, "residual"))}</div>`).join("")
+      : `<div class="empty-note">No open risks yet. Add one from the risk register.</div>`}</div></section>`;
+
+  const due = state.actions.filter(a => a.status !== "Done").sort((a, b) => (a.dueDate || "9999").localeCompare(b.dueDate || "9999")).slice(0, 6);
+  const dueHtml = `<section class="panel"><div class="panel-head"><h2>Actions by due date</h2><a href="#actions" class="mono">All actions →</a></div>
+    <div class="rows">${due.length ? due.map(a => `<div class="rowi" data-open="actions:${a.id}"><span class="mono">${esc(a.ref)}</span>
+      <div style="min-width:0"><div class="t">${esc(a.title)}</div><div class="meta">${esc(a.owner || "No owner")} · ${a.riskId ? riskRef(a.riskId) : "No linked risk"}</div></div>
+      <span class="tag ${actionOverdue(a) ? "warn" : ""}">${actionOverdue(a) ? "Overdue · " : ""}${fmtDate(a.dueDate)}</span></div>`).join("")
+      : `<div class="empty-note">No open actions.</div>`}</div></section>`;
+
+  const A = assessMap();
+  const fwsSorted = [...state.frameworks].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  const compHtml = `<section class="panel"><div class="panel-head"><h2>Compliance by framework</h2><a href="#compliance" class="mono">Compliance →</a></div>
+    <div>${fwsSorted.length ? fwsSorted.map(fw => { const s = stats(fwStatus(fw, A));
+      return `<div class="fw-line" data-fw-go="${esc(fw.id)}"><strong>${esc(fw.name)}</strong><span class="num">${s.pct === null ? "—" : s.pct + "%"}</span>${stackBar(s)}<span></span><span class="meta">${s.assessed} of ${s.total} assessed · ${state.findings.filter(f => findingOpen(f) && String(f.reqKey || "").startsWith(fw.id + "~")).length} open findings</span></div>`; }).join("")
+      : `<div class="empty-note">No frameworks yet. Import NIST CSF 2.0 or CIS Controls on the Compliance page.</div>`}</div></section>`;
+
+  const cats = CATEGORIES.map(c => { const rs = open.filter(r => r.category === c); return { c, rs }; }).filter(x => x.rs.length);
+  const maxC = Math.max(1, ...cats.map(x => x.rs.length));
+  const catHtml = `<section class="panel"><div class="panel-head"><h2>Open risks by category</h2></div>
+    <div class="bars">${cats.length ? cats.map(({ c, rs }) => {
+      const parts = ["crit", "high", "med", "low"].map(b => [b, rs.filter(r => band(score(r, "residual")) === b && score(r, "residual")).length]);
+      return `<div class="bar"><span>${esc(c)}</span><div class="track" style="width:${(rs.length / maxC) * 100}%">${parts.map(([b, n]) => n ? `<i style="flex:${n};background:var(--${b})" title="${BAND_NAME[b]}: ${n}"></i>` : "").join("")}${rs.filter(r => !score(r, "residual")).length ? `<i style="flex:${rs.filter(r => !score(r, "residual")).length};background:var(--line)"></i>` : ""}</div><span class="num">${rs.length}</span></div>`;
+    }).join("") : `<div class="empty-note">Categories appear here once risks are added.</div>`}</div></section>`;
+
+  return `<div class="page-head"><div><h1>Risk dashboard</h1><p>Where the organisation's exposure sits today, measured against a residual appetite of ${APPETITE}.</p></div>
+    ${canDo("risks") ? `<button class="btn primary" data-new="risks">New risk</button>` : ""}</div>
+    ${kpis}<div class="grid-2">${heat}<div style="display:flex;flex-direction:column;gap:20px;min-width:0">${topHtml}${catHtml}</div></div><div class="grid-2">${dueHtml}${compHtml}</div>`;
+}
+
+function complianceHtml() {
+  const fws = [...state.frameworks].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  const head = `<div class="page-head"><div><h1>Compliance</h1><p>Assess each framework requirement, map it to your controls, and see how compliant you are. Compliance % counts partially compliant as half and leaves out requirements marked not applicable.</p></div>
+    ${canDo("frameworks") ? `<button class="btn primary" data-import>Import framework</button>` : ""}</div>`;
+  if (!fws.length) {
+    const loading = mode !== "local" && !loaded.frameworks;
+    return head + `<section class="panel"><h2>${loading ? "Loading frameworks…" : "No frameworks yet"}</h2>${loading ? "" : `<p class="empty-note">Start by importing a framework. NIST CSF 2.0 is built in. CIS Controls v8.1 and other frameworks can be imported from the Excel or CSV file you download from the publisher.</p>${canDo("frameworks") ? `<div><button class="btn primary" data-import>Import framework</button></div>` : ""}`}</section>`;
+  }
+  if (!fws.find(f => f.id === ui.fw)) ui.fw = fws[0].id;
+  const fw = fws.find(f => f.id === ui.fw);
+  const A = assessMap();
+  const reqs = fw.requirements || [];
+  const stOf = r => (A[reqDocKey(fw.id, r.code)] || {}).status || "Not assessed";
+  const gName = g => (fw.groups && fw.groups[g]) || g;
+  const s = stats(reqs.map(stOf));
+  const fwFindings = state.findings.filter(f => String(f.reqKey || "").startsWith(fw.id + "~"));
+
+  const tabs = fws.length > 1 ? `<div class="seg fw-tabs" role="group" aria-label="Framework">${fws.map(f => `<button data-fw="${esc(f.id)}" class="${f.id === fw.id ? "on" : ""}">${esc(f.name)}</button>`).join("")}</div>` : "";
+  const summary = `<section class="panel"><div class="panel-head"><div><h2>${esc(fw.name)}${fw.version ? ` <span class="mono">v${esc(fw.version)}</span>` : ""}</h2><div class="meta">${esc(fw.source || "")}</div></div>
+      ${canDo("frameworks") ? `<button class="btn danger" type="button" id="fw-del">Remove framework</button>` : ""}</div>
+    <div class="comp-summary"><div class="big-pct">${s.pct === null ? "—" : s.pct + "%"}<small>compliant</small></div>
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">${stackBar(s)}
+        <div class="legend">${REQ_STATUSES.map(k => `<span><i style="background:${ST_COLOR[k]}"></i>${k} <span class="mono">${s.c[k]}</span></span>`).join("")}</div>
+        <div class="meta">${s.assessed} of ${s.total} requirements assessed · ${fwFindings.filter(findingOpen).length} open audit findings against this framework</div></div></div></section>`;
+
+  const groups = [...new Set(reqs.map(r => r.group))];
+  const grpHtml = `<section class="panel"><div class="panel-head"><h2>By ${fw.id === "nist-csf-2" ? "function" : "control group"}</h2>${ui.grp ? `<span class="chip">${esc(trunc(gName(ui.grp), 30))}<button data-grp="" aria-label="Show all groups">×</button></span>` : ""}</div>
+    <div>${groups.map(g => { const gs = stats(reqs.filter(r => r.group === g).map(stOf));
+      return `<button class="grp-row ${ui.grp === g ? "on" : ""}" data-grp="${esc(g)}"><span class="gname">${esc(gName(g))}</span><span class="num">${gs.total}</span>${stackBar(gs)}<span class="num">${gs.pct === null ? "—" : gs.pct + "%"}</span></button>`; }).join("")}</div></section>`;
+
+  let rows = reqs;
+  if (ui.grp) rows = rows.filter(r => r.group === ui.grp);
+  if (ui.cst) rows = rows.filter(r => stOf(r) === ui.cst);
+  if (ui.lvl) rows = rows.filter(r => r.level === ui.lvl);
+  const q = ui.q.trim().toLowerCase();
+  if (q) rows = rows.filter(r => [r.code, r.title, r.category, r.description, (A[reqDocKey(fw.id, r.code)] || {}).owner].some(v => String(v || "").toLowerCase().includes(q)));
+  const levels = [...new Set(reqs.map(r => r.level).filter(Boolean))].sort();
+  const hasFn = reqs.some(r => r.fn);
+  const toolbar = `<input id="q" type="search" placeholder="Search requirements…" value="${esc(ui.q)}">
+    <select id="f-grp"><option value="">All groups</option>${groups.map(g => `<option value="${esc(g)}" ${ui.grp === g ? "selected" : ""}>${esc(trunc(gName(g), 40))}</option>`).join("")}</select>
+    ${sel("f-cst", "All statuses", REQ_STATUSES, ui.cst)}${levels.length ? sel("f-lvl", "All levels", levels, ui.lvl) : ""}`;
+  const table = `<div class="table-wrap">${rows.length ? `<table><thead><tr><th>Code</th><th>Requirement</th><th>${fw.id === "nist-csf-2" ? "Category" : "Group"}</th>${hasFn ? "<th>Function</th>" : ""}${levels.length ? "<th>Level</th>" : ""}<th>Status</th><th>Controls</th><th>Findings</th><th>Owner</th><th>Assessed</th></tr></thead><tbody>
+    ${rows.map(r => { const key = reqDocKey(fw.id, r.code), a = A[key] || {}, st = stOf(r);
+      const nf = state.findings.filter(f => f.reqKey === key && findingOpen(f)).length;
+      return `<tr data-assess="${esc(key)}"><td class="mono">${esc(r.code)}</td><td class="title">${esc(trunc(r.title, 140))}</td>
+        <td>${esc(trunc(r.category || gName(r.group), 48))}</td>${hasFn ? `<td>${esc(r.fn || "—")}</td>` : ""}${levels.length ? `<td><span class="tag">${esc(r.level || "—")}</span></td>` : ""}
+        <td><span class="pill ${ST_CLS[st]}">${st}</span></td><td class="mono">${(a.controlIds || []).length || "—"}</td>
+        <td>${nf ? `<span class="tag warn">${nf} open</span>` : `<span class="mono">—</span>`}</td><td>${esc(a.owner || "—")}</td><td>${fmtDate(a.lastAssessed)}</td></tr>`; }).join("")}
+    </tbody></table>` : `<div class="table-empty">No requirements match these filters.</div>`}</div>`;
+  return head + tabs + `<div class="grid-2">${summary}${grpHtml}</div><div class="toolbar">${toolbar}</div>${table}`;
+}
+
+function usersHtml() {
+  const mgr = canManageUsers(), role = myRole();
+  const members = [...state.members].sort((a, b) => (a.active === false) - (b.active === false) || personName(a.id).localeCompare(personName(b.id)));
+  const head = `<div class="page-head"><div><h1>Users &amp; roles</h1><p>Give each person a role. Roles decide what they can add and change; everyone with access can read every register.</p></div>
+    ${mgr ? `<button class="btn primary" data-add-person>Add person</button>` : ""}</div>`;
+  const mods = MODULES.filter(m => ROLES[role].edit.includes(m[0])).map(m => m[1]);
+  const yours = `<section class="panel"><div class="panel-head"><h2>Your access</h2></div>
+    <div class="person">${me.id ? avatar(me.id) : ""}<div style="min-width:0"><strong>${esc(me.id ? personName(me.id) : mode === "local" ? "Demo user" : "Signed out")}</strong>
+      <div class="meta">${esc(role)}${me.isOwner ? " · owner of this workspace" : ""}${myMember() && myMember().department ? " · " + esc(myMember().department) : ""}</div></div></div>
+    <div class="meta">${canWrite ? (mods.length ? `You can add and change: ${esc(mods.join(", "))}.` : "You can view everything but not change records.") : "Your Share access is view-only, so you can't change records whatever your role."}</div></section>`;
+  const how = `<section class="panel"><div class="panel-head"><h2>How access works</h2></div>
+    <div class="meta" style="display:flex;flex-direction:column;gap:8px">
+      <span><strong>1. Share the workspace.</strong> The owner adds colleagues from the page's Share menu. <em>Contributor</em> lets someone work in RiskLedger, <em>Viewer</em> keeps them read-only whatever their role, and <em>Editor</em> also lets an Admin manage users.</span>
+      <span><strong>2. Assign a role here.</strong> People who have opened RiskLedger appear under "Recently opened" when you add a person, or you can search your organisation by name.</span>
+      <span><strong>3. Deactivate</strong> leavers instead of deleting them, so their change history keeps a name.</span>
+      ${!mgr && canWrite ? `<span>Only Admins with Editor access can change roles.</span>` : ""}</div></section>`;
+  const ownerRow = me.isOwner && me.id && !myMember() ? `<tr><td><div class="person">${avatar(me.id)}<span>${esc(personName(me.id))}</span></div></td><td><span class="pill p-low">Admin</span> <span class="tag">Owner</span></td><td>—</td><td><span class="tag">Active</span></td><td>—</td></tr>` : "";
+  const table = `<div class="table-wrap">${members.length || ownerRow ? `<table><thead><tr><th>Person</th><th>Role</th><th>Department</th><th>Status</th><th>Added</th></tr></thead><tbody>${ownerRow}
+    ${members.map(m => `<tr ${mgr ? `data-member="${esc(m.id)}"` : 'style="cursor:default"'}><td><div class="person">${avatar(m.id)}<span>${esc(personName(m.id))}${m.id === me.id ? " (you)" : ""}</span></div></td>
+      <td><span class="pill ${m.role === "Admin" ? "p-low" : m.role === "Viewer" ? "p-neutral" : "p-med"}">${esc(m.role || "Viewer")}</span></td><td>${esc(m.department || "—")}</td>
+      <td><span class="${m.active === false ? "tag warn" : "tag"}">${m.active === false ? "Deactivated" : "Active"}</span></td><td>${fmtDate(String(m.addedAt || "").slice(0, 10))}</td></tr>`).join("")}</tbody></table>`
+    : `<div class="table-empty">${mode !== "local" && !loaded.members ? "Loading users…" : `No roles assigned yet. Until you add someone, everyone who can edit this page has full access.${mgr ? " Start with <strong>Add person</strong>." : ""}`}</div>`}</div>`;
+  const matrix = `<section class="panel"><div class="panel-head"><h2>Roles and permissions</h2><span class="meta">Every role can view every module</span></div>
+    <div class="table-wrap matrix"><table><thead><tr><th>Role</th>${MODULES.map(m => `<th>${m[1]}</th>`).join("")}</tr></thead><tbody>
+    ${ROLE_NAMES.map(r => `<tr><td><strong>${r}</strong><div class="meta" style="max-width:260px;white-space:normal">${ROLES[r].desc}</div></td>${MODULES.map(m => `<td>${ROLES[r].edit.includes(m[0]) ? `<span class="yes">Edit</span>` : `<span class="ro">View</span>`}</td>`).join("")}</tr>`).join("")}
+    </tbody></table></div></section>`;
+  return head + `<div class="grid-2">${yours}${how}</div>` + table + matrix;
+}
+
+let pickId = null;
+function openMember(id) {
+  if (!canManageUsers()) return;
+  drawer = { kind: "members", id }; formKind = "members"; pickId = id || null;
+  const m = id ? (byId("members", id) || {}) : {};
+  const known = new Set(state.members.map(x => x.id));
+  const recent = state.visitors.filter(v => !known.has(v.id)).sort((a, b) => (b.lastSeen || "").localeCompare(a.lastSeen || "")).slice(0, 12);
+  const role = m.role || "Risk owner";
+  const picker = id ? `<div class="person">${avatar(id)}<strong>${esc(personName(id))}</strong></div>` : `
+    <div class="field"><label for="pp-q">Find a colleague</label><input id="pp-q" type="search" autocomplete="off" placeholder="${userNs ? "Type a name or email" : "People search isn't available here"}" ${userNs ? "" : "disabled"}></div>
+    <div class="pick-list" id="pp-results"></div>
+    ${recent.length ? `<div class="field"><span class="group-lbl">Recently opened RiskLedger</span><div class="pick-list">${recent.map(v => `<button type="button" class="pick" data-pick="${esc(v.id)}">${avatar(v.id)}<span>${esc(personName(v.id))}</span><small>${fmtDate(v.lastSeen)}</small></button>`).join("")}</div></div>` : ""}
+    <div class="meta" id="pp-sel">No one selected yet.</div>`;
+  document.getElementById("drawer-root").innerHTML = `<div class="scrim" data-close></div>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title">
+      <header><div><div class="mono">Users &amp; roles</div><h2 id="dr-title">${id ? "Edit person" : "Add person"}</h2>${m.updatedAt ? `<div class="meta" id="dr-by" data-by="${esc(m.updatedBy || "")}">Last changed ${fmtDate(String(m.updatedAt).slice(0, 10))}</div>` : ""}</div><button class="x" data-close aria-label="Close">×</button></header>
+      <form class="body" id="rec-form" novalidate>${picker}
+        <div class="field"><label for="m-role">Role</label><select id="m-role">${ROLE_NAMES.map(r => `<option ${r === role ? "selected" : ""}>${r}</option>`).join("")}</select><span class="meta" id="m-role-desc">${ROLES[role].desc}</span></div>
+        <div class="field"><label for="m-dept">Department or business unit</label><input id="m-dept" type="text" value="${esc(m.department)}" placeholder="e.g. Finance"></div>
+        ${id ? `<div class="field"><label for="m-active">Status</label><select id="m-active"><option ${m.active !== false ? "selected" : ""}>Active</option><option ${m.active === false ? "selected" : ""}>Deactivated</option></select></div>` : ""}
+        <div class="meta">They also need this workspace shared with them from the Share menu before they can open it.</div>
+        <div class="err" id="form-err" hidden></div></form>
+      <footer><button class="btn primary" type="submit" form="rec-form" id="save-btn">${id ? "Save changes" : "Add person"}</button><button class="btn" data-close type="button">Cancel</button><span class="spacer"></span>
+        ${id && id !== me.id ? `<button class="btn danger" type="button" id="mem-del">Remove</button>` : ""}</footer>
+    </aside>`;
+  fillChangedBy();
+  const q = document.getElementById("pp-q"); if (q && !q.disabled) q.focus();
+}
+function renderPicks(hits) {
+  const box = document.getElementById("pp-results"); if (!box) return;
+  const known = new Set(state.members.map(x => x.id));
+  hits.forEach(h => { people[h.id] = h; });
+  box.innerHTML = hits.map(h => `<button type="button" class="pick ${h.id === pickId ? "on" : ""}" data-pick="${esc(h.id)}" ${known.has(h.id) ? "disabled" : ""}><img class="av" alt="" src="${esc(h.avatarUrl)}"><span>${esc(h.name)}</span><small>${known.has(h.id) ? "Already added" : h.guest ? "Guest" : ""}</small></button>`).join("");
+}
+async function saveMember() {
+  if (!canManageUsers()) return;
+  const id = drawer.id || pickId;
+  if (!id) { showErr("Choose a person first."); return; }
+  const ex = byId("members", id);
+  const role = document.getElementById("m-role").value;
+  const act = document.getElementById("m-active");
+  if (id === me.id && !me.isOwner && (role !== "Admin" || (act && act.value !== "Active"))) { showErr("You can't remove your own Admin access. Ask another admin to change it."); return; }
+  const now = new Date().toISOString();
+  const data = { role, department: document.getElementById("m-dept").value.trim(), active: act ? act.value === "Active" : true,
+    addedAt: ex?.addedAt || now, addedBy: ex?.addedBy || me.id || "", updatedAt: now, updatedBy: me.id || "" };
+  const btn = document.getElementById("save-btn"); btn.disabled = true; btn.textContent = "Saving…";
+  try { await putDoc("members", id, data); closeDrawer(); }
+  catch (err) { showErr(err && err.code === "invalid_argument" ? "Only Admins with Editor access to this workspace can change roles." : dbMessage(err)); btn.disabled = false; btn.textContent = drawer && drawer.id ? "Save changes" : "Add person"; }
+}
+function fillChangedBy() {
+  const el = document.getElementById("dr-by"); if (!el || !el.dataset.by) return;
+  const id = el.dataset.by, base = el.textContent;
+  const set = () => { if (el.isConnected) el.textContent = `${base} by ${personName(id)}`; };
+  if (people[id] || !userNs) { set(); return; }
+  userNs.profiles([id]).then(ps => { Object.assign(people, ps); set(); }).catch(() => {});
+}
+
+function listHtml(kind) {
+  const E = ENTITIES[kind];
+  let rows = [...state[kind]];
+  const q = ui.q.trim().toLowerCase();
+  let toolbar = `<input id="q" type="search" placeholder="Search ${E.one}s…" value="${esc(ui.q)}">`;
+  let thead = "", body = "";
+
+  if (kind === "risks") {
+    if (ui.cat) rows = rows.filter(r => r.category === ui.cat);
+    if (ui.status) rows = rows.filter(r => r.status === ui.status);
+    if (ui.band) rows = rows.filter(r => score(r, "residual") && band(score(r, "residual")) === ui.band);
+    if (ui.cell) rows = rows.filter(r => r.status !== "Closed" && num(r[ui.cell.basis + "L"]) === ui.cell.l && num(r[ui.cell.basis + "I"]) === ui.cell.i);
+    rows.sort((a, b) => score(b, "residual") - score(a, "residual") || sortRefs(a, b));
+    toolbar += sel("f-cat", "All categories", CATEGORIES, ui.cat) + sel("f-status", "All statuses", ["Open", "In treatment", "Monitoring", "Closed"], ui.status)
+      + `<select id="f-band"><option value="">All residual levels</option>${["crit", "high", "med", "low"].map(b => `<option value="${b}" ${ui.band === b ? "selected" : ""}>${BAND_NAME[b]}</option>`).join("")}</select>`;
+    if (ui.cell) toolbar += `<span class="chip">${ui.cell.basis === "inherent" ? "Inherent" : "Residual"} L${ui.cell.l} × I${ui.cell.i}<button data-clear-cell aria-label="Clear heat map filter">×</button></span>`;
+    thead = ["ID", "Risk", "Category", "Owner", "Inherent", "Residual", "Treatment", "Status", "Next review"];
+    body = r => `<td class="mono">${esc(r.ref)}</td><td class="title">${esc(r.title)}${r.description ? `<small>${esc(r.description)}</small>` : ""}</td>
+      <td>${esc(r.category || "—")}</td><td>${esc(r.owner || "—")}</td><td>${pill(score(r, "inherent"))}</td>
+      <td>${pill(score(r, "residual"))}${score(r, "residual") > APPETITE && r.status !== "Closed"
+        ? (state.exceptions.some(e => e.riskId === r.id && exActive(e)) ? ` <span class="tag" title="Accepted above appetite under an approved exception">Excepted</span>` : ` <span class="tag warn" title="Residual score is above appetite">Above appetite</span>`) : ""}</td>
+      <td>${esc(r.treatment || "—")}</td><td><span class="tag">${esc(r.status || "Open")}</span></td>
+      <td><span class="${reviewOverdue(r) ? "tag warn" : ""}">${fmtDate(r.reviewDate)}</span></td>`;
+  } else if (kind === "controls") {
+    rows.sort(sortRefs);
+    thead = ["ID", "Control", "Type", "Owner", "Frequency", "Last tested", "Result", "Risks"];
+    const resCls = { "Effective": "p-low", "Partially effective": "p-med", "Ineffective": "p-crit" };
+    body = c => `<td class="mono">${esc(c.ref)}</td><td class="title">${esc(c.name)}${c.description ? `<small>${esc(c.description)}</small>` : ""}</td>
+      <td>${esc(c.type || "—")}${c.nature ? `<div class="mono">${esc(c.nature)}</div>` : ""}</td><td>${esc(c.owner || "—")}</td><td>${esc(c.frequency || "—")}</td>
+      <td>${fmtDate(c.lastTested)}</td><td><span class="pill ${resCls[c.result] || "p-neutral"}">${esc(c.result || "Not tested")}</span></td>
+      <td class="mono">${state.risks.filter(r => (r.controlIds || []).includes(c.id)).length}</td>`;
+  } else if (kind === "actions") {
+    rows.sort((a, b) => (a.status === "Done") - (b.status === "Done") || (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
+    toolbar += sel("f-status", "All statuses", ["Not started", "In progress", "Done"], ui.status);
+    if (ui.status) rows = rows.filter(a => a.status === ui.status);
+    thead = ["ID", "Action", "Risk", "Owner", "Due", "Status"];
+    body = a => `<td class="mono">${esc(a.ref)}</td><td class="title">${esc(a.title)}${a.notes ? `<small>${esc(a.notes)}</small>` : ""}</td>
+      <td>${a.riskId ? riskRef(a.riskId) : "—"}</td><td>${esc(a.owner || "—")}</td>
+      <td><span class="${actionOverdue(a) ? "tag warn" : ""}">${actionOverdue(a) ? "Overdue · " : ""}${fmtDate(a.dueDate)}</span></td>
+      <td><span class="tag">${esc(a.status || "Not started")}</span></td>`;
+  } else if (kind === "findings") {
+    toolbar += sel("f-src", "Internal & external", ["Internal", "External"], ui.src) + sel("f-status", "All statuses", FINDING_STATUS, ui.status) + sel("f-sev", "All severities", ["Critical", "High", "Medium", "Low"], ui.sev);
+    if (ui.src) rows = rows.filter(f => (isExternal(f.source) ? "External" : "Internal") === ui.src);
+    if (ui.status) rows = rows.filter(f => (f.status || "Open") === ui.status);
+    if (ui.sev) rows = rows.filter(f => f.severity === ui.sev);
+    const rank = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+    rows.sort((a, b) => findingOpen(b) - findingOpen(a) || (rank[a.severity] ?? 4) - (rank[b.severity] ?? 4) || (a.dueDate || "9999").localeCompare(b.dueDate || "9999"));
+    thead = ["ID", "Finding", "Source", "Severity", "Requirement", "Owner", "Due", "Status"];
+    body = f => `<td class="mono">${esc(f.ref)}</td><td class="title">${esc(f.title)}${f.audit ? `<small>${esc(f.audit)}</small>` : ""}</td>
+      <td><span class="tag">${isExternal(f.source) ? "External" : "Internal"}</span><div class="mono">${esc(f.source || "")}</div></td>
+      <td><span class="pill ${SEV_CLS[f.severity] || "p-neutral"}">${esc(f.severity || "—")}</span></td>
+      <td>${f.reqKey ? esc(reqLabel(f.reqKey, true)) : "—"}</td><td>${esc(f.owner || "—")}</td>
+      <td><span class="${findingOverdue(f) ? "tag warn" : ""}">${findingOverdue(f) ? "Overdue · " : ""}${fmtDate(f.dueDate)}</span></td>
+      <td><span class="tag">${esc(f.status || "Open")}</span></td>`;
+  } else if (kind === "exceptions") {
+    const order = { Expired: 0, Requested: 1, Approved: 2, Rejected: 3, Closed: 4 };
+    rows.sort((a, b) => order[exState(a)] - order[exState(b)] || (a.expiryDate || "9999").localeCompare(b.expiryDate || "9999"));
+    toolbar += sel("f-status", "All statuses", ["Requested", "Approved", "Expired", "Rejected", "Closed"], ui.status);
+    if (ui.status) rows = rows.filter(e => exState(e) === ui.status);
+    thead = ["ID", "Exception", "Risk accepted", "Residual", "Approver", "Valid from", "Expires", "Status"];
+    body = e => { const r = byId("risks", e.riskId); const st = exState(e);
+      return `<td class="mono">${esc(e.ref)}</td><td class="title">${esc(e.title)}${e.justification ? `<small>${esc(e.justification)}</small>` : ""}</td>
+      <td>${e.riskId ? riskRef(e.riskId) : "—"}</td><td>${r ? pill(score(r, "residual")) : "—"}</td>
+      <td>${esc(e.approver || "—")}${e.requestedBy ? `<div class="mono">Req. ${esc(e.requestedBy)}</div>` : ""}</td>
+      <td>${fmtDate(e.startDate)}</td>
+      <td><span class="${st === "Expired" ? "tag warn" : exExpiringSoon(e) ? "tag warn" : ""}">${exExpiringSoon(e) ? "Expires soon · " : ""}${fmtDate(e.expiryDate)}</span></td>
+      <td><span class="pill ${EX_CLS[st] || "p-neutral"}">${st}</span></td>`; };
+  } else {
+    rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const sevCls = { Low: "p-low", Medium: "p-med", High: "p-high", Critical: "p-crit" };
+    thead = ["ID", "Incident", "Date", "Severity", "Related risk", "Loss", "Status"];
+    body = i => `<td class="mono">${esc(i.ref)}</td><td class="title">${esc(i.title)}${i.description ? `<small>${esc(i.description)}</small>` : ""}</td>
+      <td>${fmtDate(i.date)}</td><td><span class="pill ${sevCls[i.severity] || "p-neutral"}">${esc(i.severity || "—")}</span></td>
+      <td>${i.riskId ? riskRef(i.riskId) : "—"}</td><td class="mono">${i.loss ? num(i.loss).toLocaleString() : "—"}</td><td><span class="tag">${esc(i.status || "Open")}</span></td>`;
+  }
+  if (q) rows = rows.filter(x => [x.ref, x.title, x.name, x.description, x.owner, x.category, x.notes, x.justification, x.approver, x.requestedBy, x.audit, x.auditor, x.response].some(v => String(v || "").toLowerCase().includes(q)));
+
+  const subtitles = {
+    risks: "Every identified risk with its owner, scores before and after controls, and how it is being treated. Sorted by residual score.",
+    controls: "The controls that reduce risk, how often they run, and whether testing shows they work.",
+    actions: "Planned work to bring risks within appetite. Overdue items are flagged.",
+    findings: "Issues raised by internal audit, external auditors and regulators, with the agreed fix, owner and due date. Open and overdue findings come first.",
+    exceptions: "Risks formally accepted outside appetite or policy for a limited time, with who approved them, why, and when the acceptance runs out.",
+    incidents: "Events that happened, linked back to the risks they realised, with any financial loss.",
+  };
+  const loading = mode !== "local" && !loaded[kind];
+  return `<div class="page-head"><div><h1>${E.title}</h1><p>${subtitles[kind]}</p></div>
+    ${canDo(kind) ? `<button class="btn primary" data-new="${kind}">New ${E.one}</button>` : ""}</div>
+    <div class="toolbar">${toolbar}</div>
+    <div class="table-wrap">${rows.length ? `<table><thead><tr>${thead.map(h => `<th>${h}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(x => `<tr data-open="${kind}:${x.id}">${body(x)}</tr>`).join("")}</tbody></table>`
+      : `<div class="table-empty">${loading ? `Loading ${E.one}s…` : state[kind].length ? "No records match these filters." : `No ${E.one}s yet.${canDo(kind) ? ` Add the first one with <strong>New ${E.one}</strong>.` : ""}`}</div>`}</div>`;
+}
+function sel(id, all, opts, cur) { return `<select id="${id}"><option value="">${all}</option>${opts.map(o => `<option ${cur === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`; }
+
+/* ---------- Drawer / forms ---------- */
+let drawer = null; // {kind, id}
+function fieldHtml(f, rec) {
+  const id = "f_" + f.k, v = rec[f.k];
+  const lab = `<label for="${id}">${esc(f.label)}${f.req ? " *" : ""}</label>`;
+  const dis = canDo(formKind) ? "" : "disabled";
+  if (f.type === "textarea") return `<div class="field">${lab}<textarea id="${id}" ${dis}>${esc(v)}</textarea></div>`;
+  if (f.type === "select") return `<div class="field">${lab}<select id="${id}" ${dis}>${f.opts.map(o => `<option ${v === o ? "selected" : ""}>${esc(o)}</option>`).join("")}</select></div>`;
+  if (f.type === "risk") return `<div class="field">${lab}<select id="${id}" ${dis}><option value="">None</option>${[...state.risks].sort(sortRefs).map(r => `<option value="${esc(r.id)}" ${v === r.id ? "selected" : ""}>${esc(r.ref)} ${esc(r.title)}</option>`).join("")}</select></div>`;
+  if (f.type === "requirement") return `<div class="field">${lab}<select id="${id}" ${dis}><option value="">None</option>${[...state.frameworks].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map(fw => `<optgroup label="${esc(fw.name)}">${(fw.requirements || []).map(r => { const key = reqDocKey(fw.id, r.code); return `<option value="${esc(key)}" ${v === key ? "selected" : ""}>${esc(r.code)} ${esc(trunc(r.title, 70))}</option>`; }).join("")}</optgroup>`).join("")}${v && !findReq(v) ? `<option value="${esc(v)}" selected>${esc(reqLabel(v))} (framework not loaded)</option>` : ""}</select></div>`;
+  if (f.type === "controls") {
+    const ids = v || [];
+    const list = [...state.controls].sort(sortRefs);
+    return `<div class="field"><span class="group-lbl">${esc(f.label)}</span>${list.length ? `<div class="checks">${list.map(c => `<label><input type="checkbox" name="ctrl" value="${esc(c.id)}" ${ids.includes(c.id) ? "checked" : ""} ${dis}><span><span class="mono">${esc(c.ref)}</span> ${esc(c.name)}</span></label>`).join("")}</div>` : `<div class="empty-note">No controls in the library yet.</div>`}</div>`;
+  }
+  return `<div class="field">${lab}<input id="${id}" type="${f.type}" value="${esc(v)}" ${f.type === "number" ? 'min="0" step="any"' : ""} ${dis}></div>`;
+}
+function assessHtml(basis, label, rec) {
+  const L = num(rec[basis + "L"]) || 3, I = num(rec[basis + "I"]) || 3, dis = canDo(formKind) ? "" : "disabled";
+  return `<div class="assess"><div class="assess-head"><span class="group-lbl">${label}</span><span id="sc_${basis}">${pill(L * I)}</span></div>
+    <div class="pair"><div class="field"><label for="f_${basis}L">Likelihood</label><select id="f_${basis}L" data-score="${basis}" ${dis}>${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${n === L ? "selected" : ""}>${n} · ${L_LABELS[n]}</option>`).join("")}</select></div>
+    <div class="field"><label for="f_${basis}I">Impact</label><select id="f_${basis}I" data-score="${basis}" ${dis}>${[1, 2, 3, 4, 5].map(n => `<option value="${n}" ${n === I ? "selected" : ""}>${n} · ${I_LABELS[n]}</option>`).join("")}</select></div></div></div>`;
+}
+const fieldsHtml = (E, rec) => E.fields.map(f => f.pair ? `<div class="pair">${f.pair.map(p => fieldHtml(p, rec)).join("")}</div>`
+  : f.assess ? assessHtml(f.assess, f.label, rec) : fieldHtml(f, rec)).join("");
+function openDrawer(kind, id, preset) {
+  const E = ENTITIES[kind];
+  const rec = id ? (byId(kind, id) || {}) : (preset || {});
+  drawer = { kind, id }; formKind = kind;
+  const ok = canDo(kind);
+  const body = fieldsHtml(E, rec);
+  const linked = kind === "risks" && id ? relatedHtml(id) : "";
+  document.getElementById("drawer-root").innerHTML = `<div class="scrim" data-close></div>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title">
+      <header><div><div class="mono">${id ? esc(rec.ref) : nextRef(kind)}</div><h2 id="dr-title">${id ? (ok ? "Edit " : "") + E.one : "New " + E.one}</h2>${id && rec.updatedAt ? `<div class="meta" id="dr-by" data-by="${esc(rec.updatedBy || "")}" data-at="${esc(rec.updatedAt)}">Last changed ${fmtDate(String(rec.updatedAt).slice(0, 10))}</div>` : ""}</div><button class="x" data-close aria-label="Close">×</button></header>
+      <form class="body" id="rec-form" novalidate>${body}${linked}<div class="err" id="form-err" hidden></div></form>
+      <footer>${ok ? `<button class="btn primary" type="submit" form="rec-form" id="save-btn">${id ? "Save changes" : "Add " + E.one}</button>` : ""}
+        <button class="btn" data-close type="button">${ok ? "Cancel" : "Close"}</button><span class="spacer"></span>
+        ${id && ok ? `<button class="btn danger" type="button" id="del-btn">Delete</button>` : ""}</footer>
+    </aside>`;
+  fillChangedBy();
+  const first = document.querySelector("#rec-form input, #rec-form select, #rec-form textarea");
+  if (first) first.focus();
+}
+function relatedHtml(riskId) {
+  const acts = state.actions.filter(a => a.riskId === riskId), incs = state.incidents.filter(i => i.riskId === riskId);
+  const exs = state.exceptions.filter(e => e.riskId === riskId);
+  const exHtml = `<div class="field"><span class="group-lbl">Risk exceptions (${exs.length})</span>${exs.length ? exs.map(e => `<div class="meta"><span class="mono">${esc(e.ref)}</span> ${esc(e.title)} · <span class="pill ${EX_CLS[exState(e)] || "p-neutral"}">${exState(e)}</span> until ${fmtDate(e.expiryDate)}</div>`).join("") : `<div class="empty-note">No exceptions. Add one on the Exceptions page if this risk is accepted above appetite.</div>`}</div>`;
+  return `<div class="field"><span class="group-lbl">Treatment actions (${acts.length})</span>${acts.length ? acts.map(a => `<div class="meta"><span class="mono">${esc(a.ref)}</span> ${esc(a.title)} · <span class="${actionOverdue(a) ? "tag warn" : "tag"}">${esc(a.status || "Not started")}${actionOverdue(a) ? ", overdue" : ""}</span></div>`).join("") : `<div class="empty-note">None yet. Add one on the Actions page.</div>`}</div>
+    <div class="field"><span class="group-lbl">Incidents (${incs.length})</span>${incs.length ? incs.map(i => `<div class="meta"><span class="mono">${esc(i.ref)}</span> ${esc(i.title)} · ${fmtDate(i.date)}</div>`).join("") : `<div class="empty-note">No incidents linked.</div>`}</div>${exHtml}`;
+}
+function openAssessment(key) {
+  const found = findReq(key); if (!found) return;
+  const { fw, r } = found;
+  const rec = byId("assessments", key) || {};
+  drawer = { kind: "assessments", id: key }; formKind = "assessments";
+  const fnds = state.findings.filter(f => f.reqKey === key);
+  const gName = (fw.groups && fw.groups[r.group]) || r.group;
+  document.getElementById("drawer-root").innerHTML = `<div class="scrim" data-close></div>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title">
+      <header><div><div class="mono">${esc(fw.name)} · ${esc(r.code)}</div><h2 id="dr-title">Assess requirement</h2>${rec.updatedAt ? `<div class="meta" id="dr-by" data-by="${esc(rec.updatedBy || "")}">Last changed ${fmtDate(String(rec.updatedAt).slice(0, 10))}</div>` : ""}</div><button class="x" data-close aria-label="Close">×</button></header>
+      <form class="body" id="rec-form" novalidate>
+        <div class="req-box"><span class="group-lbl">${esc(r.category || gName)}${r.fn ? ` · ${esc(r.fn)}` : ""}${r.level ? ` · ${esc(r.level)}` : ""}</span><p><strong>${esc(r.title)}</strong></p>${r.description ? `<p class="meta">${esc(r.description)}</p>` : ""}</div>
+        ${fieldsHtml(ENTITIES.assessments, rec)}
+        <div class="field"><span class="group-lbl">Audit findings (${fnds.length})</span>${fnds.length ? fnds.map(f => `<div class="meta"><span class="mono">${esc(f.ref)}</span> ${esc(f.title)} · <span class="${findingOverdue(f) ? "tag warn" : "tag"}">${esc(f.status || "Open")}${findingOverdue(f) ? ", overdue" : ""}</span></div>`).join("") : `<div class="empty-note">No findings raised against this requirement.</div>`}
+          ${canDo("findings") ? `<div><button class="btn" type="button" data-new="findings" data-preset-req="${esc(key)}">Raise a finding</button></div>` : ""}</div>
+        <div class="err" id="form-err" hidden></div></form>
+      <footer>${canDo("assessments") ? `<button class="btn primary" type="submit" form="rec-form" id="save-btn">Save changes</button>` : ""}<button class="btn" data-close type="button">${canDo("assessments") ? "Cancel" : "Close"}</button></footer>
+    </aside>`;
+  fillChangedBy();
+  const first = document.getElementById("f_status"); if (first) first.focus();
+}
+
+/* ---------- Framework import ---------- */
+let pendingImport = null;
+function openImport() {
+  drawer = { kind: "import" }; pendingImport = null;
+  const hasNist = state.frameworks.some(f => f.id === "nist-csf-2");
+  document.getElementById("drawer-root").innerHTML = `<div class="scrim" data-close></div>
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title">
+      <header><div><div class="mono">Compliance</div><h2 id="dr-title">Import framework</h2></div><button class="x" data-close aria-label="Close">×</button></header>
+      <div class="body">
+        <section class="imp-section"><h3>NIST Cybersecurity Framework 2.0</h3>
+          <p>Built in: 6 functions, 22 categories and 106 subcategories from the official CSF 2.0 core.</p>
+          <div><button class="btn primary" type="button" data-import-nist ${hasNist ? "disabled" : ""}>${hasNist ? "Already added" : "Add NIST CSF 2.0"}</button></div></section>
+        <section class="imp-section"><h3>From an Excel or CSV file</h3>
+          <p><strong>CIS Controls v8.1:</strong> download the Excel workbook from cisecurity.org (free registration) and upload it here. Safeguards, control names and IG1/IG2/IG3 levels are picked up automatically.</p>
+          <p><strong>Any other framework</strong> (ISO 27001 Annex A, PCI DSS, your internal policies): one row per requirement with the columns <span class="mono">Code, Title</span>, and optionally <span class="mono">Group, Category, Description, Level</span>.</p>
+          <div class="field"><label for="imp-file">File (.xlsx, .xls or .csv)</label><input id="imp-file" type="file" accept=".xlsx,.xls,.csv"></div>
+          <div class="pair"><div class="field"><label for="imp-name">Framework name *</label><input id="imp-name" type="text" placeholder="e.g. CIS Controls"></div>
+            <div class="field"><label for="imp-ver">Version</label><input id="imp-ver" type="text" placeholder="e.g. 8.1"></div></div>
+          <div class="preview" id="imp-preview"></div>
+          <div class="err" id="form-err" hidden></div>
+          <div><button class="btn primary" type="button" id="imp-go" disabled>Import requirements</button></div></section>
+      </div>
+      <footer><button class="btn" data-close type="button">Close</button></footer>
+    </aside>`;
+}
+function parseCSV(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === "," || ch === ";" && !text.slice(0, 2000).includes(",")) { row.push(cell); cell = ""; }
+    else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += ch;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+// Spreadsheets store "3.10" as the number 3.1; restore x.10 / x.20 codes from the running sequence within each group
+function fixExcelCodes(reqs) {
+  const last = {};
+  reqs.forEach(r => {
+    const m = /^(\d+)\.(\d+)$/.exec(r.code); if (!m) return;
+    let minor = Number(m[2]);
+    if (last[m[1]] !== undefined && minor <= last[m[1]] && Number(m[2] + "0") === last[m[1]] + 1) { minor = Number(m[2] + "0"); r.code = `${m[1]}.${minor}`; }
+    last[m[1]] = minor;
+  });
+  return reqs;
+}
+// CIS export without a header row: control, control title, control description, safeguard, title, description, "Function IG1 IG2 IG3"
+function mapCisHeaderless(rows) {
+  const data = rows.filter(r => r && /^\d+(\.\d+)?$/.test(String(r[3] ?? "").trim()) && String(r[4] ?? "").trim());
+  if (data.length < 10 || !/\bIG[123]\b/.test(String(data[0][6] ?? ""))) return null;
+  const groups = {}, reqs = [];
+  data.forEach(r => {
+    const ctl = String(r[0]).trim(), meta = String(r[6] ?? "").trim();
+    groups[ctl] = groups[ctl] || `${ctl} · ${String(r[1]).trim()}`;
+    reqs.push({ code: String(r[3]).trim(), title: String(r[4]).trim(), group: ctl, category: groups[ctl], description: String(r[5] ?? "").trim().slice(0, 1200),
+      level: /IG1/.test(meta) ? "IG1" : /IG2/.test(meta) ? "IG2" : /IG3/.test(meta) ? "IG3" : "", fn: meta.split(/\s+/)[0] || "" });
+  });
+  return { reqs: fixExcelCodes(reqs), groups, isCis: true };
+}
+function mapRows(rows) {
+  const cis = mapCisHeaderless(rows); if (cis) return cis;
+  const norm = s => String(s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  const CODE = ["code", "id", "ref", "reference", "cis safeguard", "safeguard", "subcategory id", "requirement id", "control id", "control ref", "clause", "control number"];
+  const TITLE = ["title", "name", "requirement", "safeguard title", "control title", "control name", "subcategory", "statement"];
+  const GROUP = ["group", "function", "cis control", "domain", "family", "control family", "section", "theme"];
+  const DESC = ["description", "guidance", "details", "safeguard description", "control description"];
+  for (let h = 0; h < Math.min(rows.length, 15); h++) {
+    const hdr = (rows[h] || []).map(norm);
+    const find = list => { for (const name of list) { const i = hdr.indexOf(name); if (i >= 0) return i; } return -1; };
+    const ci = find(CODE), ti = find(TITLE);
+    if (ci < 0 || ti < 0 || ci === ti) continue;
+    let gi = find(GROUP); if (gi === ci || gi === ti) gi = -1;
+    const di = find(DESC), cati = hdr.indexOf("category"), lvi = hdr.indexOf("level");
+    const ig = ["ig1", "ig2", "ig3"].map(x => hdr.indexOf(x));
+    const reqs = [], groups = {}, seen = new Set();
+    for (const row of rows.slice(h + 1)) {
+      const cellOf = i => i >= 0 ? String(row[i] ?? "").trim() : "";
+      const code = cellOf(ci), title = cellOf(ti), grp = cellOf(gi);
+      if (!code) { if (grp && title) groups[grp] = `${grp} · ${title}`; continue; }
+      if (!title || seen.has(code)) continue;
+      seen.add(code);
+      let level = cellOf(lvi);
+      if (!level) ig.forEach((ix, n) => { if (!level && cellOf(ix)) level = "IG" + (n + 1); });
+      reqs.push({ code, title: title.slice(0, 600), group: grp || code.split(/[.\-\s]/)[0], category: cellOf(cati), description: cellOf(di).slice(0, 1200), level });
+    }
+    if (reqs.length) return { reqs: fixExcelCodes(reqs), groups, isCis: hdr.includes("cis safeguard") || hdr.includes("safeguard") };
+  }
+  return null;
+}
+async function readImportFile(file) {
+  const buf = await file.arrayBuffer();
+  if (window.XLSX) {
+    const wb = XLSX.read(buf, { type: "array" });
+    let best = null;
+    for (const name of wb.SheetNames) {
+      const m = mapRows(XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: "", raw: false }));
+      if (m && (!best || m.reqs.length > best.reqs.length)) best = m;
+    }
+    return best;
+  }
+  if (/\.csv$/i.test(file.name)) return mapRows(parseCSV(new TextDecoder().decode(buf)));
+  throw new Error("Excel files can't be read right now. Save the sheet as CSV and upload that instead.");
+}
+async function putDoc(kind, id, data) {
+  if (mode === "local") { const ex = byId(kind, id); if (ex) Object.assign(ex, data); else state[kind].push({ id, ...data }); saveLocal(); render(); return; }
+  await db.collection(kind).doc(id).set(data);
+}
+async function saveFramework(id, doc) {
+  doc.importedAt = new Date().toISOString(); doc.updatedBy = me.id || "";
+  if (JSON.stringify(doc).length > 240000) throw new Error("This framework is too large to import in one go. Split it into files of about 800 requirements or fewer.");
+  await putDoc("frameworks", id, doc);
+  ui.fw = id; ui.grp = ""; ui.cst = ""; ui.lvl = "";
+  closeDrawer();
+  if (route() === "compliance") render(); else location.hash = "compliance";
+}
+
+function closeDrawer() { drawer = null; document.getElementById("drawer-root").innerHTML = ""; }
+
+function readForm(kind) {
+  const out = {};
+  const walk = f => {
+    if (f.pair) return f.pair.forEach(walk);
+    if (f.assess) { out[f.assess + "L"] = num(document.getElementById(`f_${f.assess}L`).value); out[f.assess + "I"] = num(document.getElementById(`f_${f.assess}I`).value); return; }
+    if (f.type === "controls") { out.controlIds = [...document.querySelectorAll('input[name="ctrl"]:checked')].map(x => x.value); return; }
+    const el = document.getElementById("f_" + f.k);
+    out[f.k] = f.type === "number" ? (el.value === "" ? null : num(el.value)) : el.value.trim();
+  };
+  ENTITIES[kind].fields.forEach(walk);
+  return out;
+}
+
+async function saveRecord(kind, id, data) {
+  const existing = id ? byId(kind, id) : null;
+  if (ENTITIES[kind].prefix) data.ref = existing?.ref || nextRef(kind);
+  data.createdAt = existing?.createdAt || new Date().toISOString();
+  data.updatedAt = new Date().toISOString();
+  data.updatedBy = me.id || "";
+  data.createdBy = existing?.createdBy || me.id || "";
+  if (existing?.example) data.example = true;
+  if (mode === "local") {
+    if (existing) Object.assign(existing, data); else state[kind].push({ id: id || "local-" + Math.random().toString(36).slice(2, 10), ...data });
+    saveLocal(); render(); return;
+  }
+  const col = db.collection(kind);
+  await (id ? col.doc(id) : col.doc()).set(data);
+}
+async function deleteRecord(kind, id) {
+  if (mode === "local") { state[kind] = state[kind].filter(x => x.id !== id); saveLocal(); render(); return; }
+  await db.collection(kind).doc(id).delete();
+}
+function dbMessage(e) {
+  const c = e && e.code;
+  if (c === "quota_exceeded") return "The workspace is full. Delete some old records and try again.";
+  if (c === "invalid_argument") return "This change couldn't be saved. You may have view-only access.";
+  if (c === "revoked" || c === "not_granted") return "Your access to this workspace changed. Reload the page to continue.";
+  return "Couldn't save right now. Check your connection and try again.";
+}
+
+/* ---------- Events ---------- */
+document.addEventListener("click", e => {
+  const t = e.target;
+  if (t.closest("[data-add-person]")) { openMember(null); return; }
+  const mb = t.closest("[data-member]"); if (mb) { openMember(mb.dataset.member); return; }
+  const pk = t.closest("[data-pick]"); if (pk && !pk.disabled) {
+    pickId = pk.dataset.pick;
+    document.querySelectorAll(".pick").forEach(b => b.classList.toggle("on", b.dataset.pick === pickId));
+    const s = document.getElementById("pp-sel"); if (s) s.textContent = `Selected: ${personName(pickId)}`;
+    return;
+  }
+  if (t.id === "mem-del" && drawer && drawer.kind === "members") {
+    if (!t.classList.contains("armed")) { t.classList.add("armed"); t.textContent = "Confirm remove"; return; }
+    t.disabled = true;
+    deleteRecord("members", drawer.id).then(closeDrawer).catch(err => { showErr(err && err.code === "invalid_argument" ? "Only Admins with Editor access to this workspace can change roles." : dbMessage(err)); t.disabled = false; });
+    return;
+  }
+  const nw = t.closest("[data-new]"); if (nw) { openDrawer(nw.dataset.new, null, nw.dataset.presetReq ? { reqKey: nw.dataset.presetReq } : null); return; }
+  const as = t.closest("[data-assess]"); if (as) { openAssessment(as.dataset.assess); return; }
+  if (t.closest("[data-import]")) { openImport(); return; }
+  if (t.closest("[data-import-nist]")) {
+    const btn = t.closest("[data-import-nist]"); btn.disabled = true; btn.textContent = "Adding…";
+    saveFramework("nist-csf-2", nistFramework()).catch(err => { showErr(err.message || dbMessage(err)); btn.disabled = false; btn.textContent = "Add NIST CSF 2.0"; });
+    return;
+  }
+  if (t.id === "imp-go" && pendingImport) {
+    const name = document.getElementById("imp-name").value.trim();
+    if (!name) { showErr("Give the framework a name before importing."); document.getElementById("imp-name").focus(); return; }
+    const version = document.getElementById("imp-ver").value.trim();
+    const id = (name + "-" + version).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) + "-" + Math.random().toString(36).slice(2, 6);
+    t.disabled = true; t.textContent = "Importing…";
+    saveFramework(id, { name, version, source: `Imported from ${pendingImport.file}`, groups: pendingImport.groups, requirements: pendingImport.reqs })
+      .catch(err => { showErr(err.message || dbMessage(err)); t.disabled = false; t.textContent = "Import requirements"; });
+    return;
+  }
+  const fg = t.closest("[data-fw-go]"); if (fg) { ui.fw = fg.dataset.fwGo; location.hash = "compliance"; return; }
+  const fwb = t.closest("[data-fw]"); if (fwb) { Object.assign(ui, { fw: fwb.dataset.fw, grp: "", cst: "", lvl: "", q: "" }); render(); return; }
+  const gb = t.closest("[data-grp]"); if (gb) { ui.grp = gb.dataset.grp; render(); return; }
+  if (t.id === "fw-del") {
+    if (!t.classList.contains("armed")) { t.classList.add("armed"); t.textContent = "Confirm: remove framework and its requirements"; return; }
+    t.disabled = true;
+    deleteRecord("frameworks", ui.fw).then(() => { ui.fw = ""; render(); }).catch(err => { t.disabled = false; t.textContent = dbMessage(err); });
+    return;
+  }
+  const op = t.closest("[data-open]"); if (op) { const [k, id] = op.dataset.open.split(":"); openDrawer(k, id); return; }
+  if (t.closest("[data-close]")) { closeDrawer(); return; }
+  const b = t.closest("[data-basis]"); if (b) { ui.heatBasis = b.dataset.basis; render(); return; }
+  const c = t.closest("[data-cell]"); if (c) { const [l, i] = c.dataset.cell.split("-").map(Number); Object.assign(ui, { cell: { basis: ui.heatBasis, l, i }, q: "", cat: "", status: "", band: "" }); location.hash = "risks"; return; }
+  if (t.closest("[data-clear-cell]")) { ui.cell = null; render(); return; }
+  if (t.id === "del-btn" && drawer) {
+    if (!t.classList.contains("armed")) { t.classList.add("armed"); t.textContent = "Confirm delete"; return; }
+    const { kind, id } = drawer; t.disabled = true;
+    deleteRecord(kind, id).then(closeDrawer).catch(err => { showErr(dbMessage(err)); t.disabled = false; });
+  }
+});
+document.addEventListener("submit", async e => {
+  if (e.target.id !== "rec-form" || !drawer) return;
+  e.preventDefault();
+  const { kind, id } = drawer;
+  if (kind === "members") { saveMember(); return; }
+  if (!canDo(kind)) return;
+  const data = readForm(kind);
+  const req = ENTITIES[kind].fields.flatMap(f => f.pair || [f]).find(f => f.req && !data[f.k]);
+  if (req) { showErr(`Add a ${req.label.toLowerCase()} before saving.`); document.getElementById("f_" + req.k).focus(); return; }
+  const btn = document.getElementById("save-btn"); btn.disabled = true; btn.textContent = "Saving…";
+  try { await saveRecord(kind, id, data); closeDrawer(); }
+  catch (err) { showErr(dbMessage(err)); btn.disabled = false; btn.textContent = id ? "Save changes" : "Add " + ENTITIES[kind].one; }
+});
+function showErr(msg) { const el = document.getElementById("form-err"); if (el) { el.textContent = msg; el.hidden = false; } }
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset.score) { const b = t.dataset.score; document.getElementById("sc_" + b).innerHTML = pill(num(document.getElementById(`f_${b}L`).value) * num(document.getElementById(`f_${b}I`).value)); return; }
+  if (t.id === "m-role") { const d = document.getElementById("m-role-desc"); if (d) d.textContent = ROLES[t.value].desc; return; }
+  if (t.id === "imp-file" && t.files && t.files[0]) {
+    const file = t.files[0], pv = document.getElementById("imp-preview"), go = document.getElementById("imp-go"), er = document.getElementById("form-err");
+    er.hidden = true; pv.textContent = "Reading file…"; go.disabled = true; pendingImport = null;
+    readImportFile(file).then(m => {
+      if (!m) { pv.textContent = ""; showErr("No requirements found. The sheet needs a header row with at least a Code (or Safeguard / ID) column and a Title column."); return; }
+      pendingImport = { ...m, file: file.name };
+      const nm = document.getElementById("imp-name"), vr = document.getElementById("imp-ver");
+      if (!nm.value && m.isCis) { nm.value = "CIS Controls"; if (!vr.value) vr.value = "8.1"; }
+      const ng = new Set(m.reqs.map(r => r.group)).size, lv = [...new Set(m.reqs.map(r => r.level).filter(Boolean))];
+      pv.innerHTML = `<strong>${m.reqs.length} requirements in ${ng} groups${lv.length ? ` · levels ${esc(lv.join(", "))}` : ""}</strong>${m.reqs.slice(0, 4).map(r => `<span><span class="mono">${esc(r.code)}</span> ${esc(trunc(r.title, 80))}</span>`).join("")}${m.reqs.length > 4 ? `<span>…and ${m.reqs.length - 4} more</span>` : ""}`;
+      go.disabled = false;
+    }).catch(err => { pv.textContent = ""; showErr(err.message || "This file couldn't be read. Check that it is an Excel or CSV file."); });
+    return;
+  }
+  const map = { "f-cat": "cat", "f-status": "status", "f-band": "band", "f-src": "src", "f-sev": "sev", "f-grp": "grp", "f-cst": "cst", "f-lvl": "lvl" };
+  if (map[t.id]) { ui[map[t.id]] = t.value; render(); }
+});
+let qTimer;
+document.addEventListener("focusin", e => { if (e.target.id === "pp-q" && userNs && !e.target.value) userNs.search("").then(renderPicks).catch(() => {}); });
+document.addEventListener("input", e => {
+  if (e.target.id === "pp-q") { if (userNs) userNs.search(e.target.value.trim()).then(renderPicks).catch(() => {}); return; }
+  if (e.target.id !== "q") return;
+  ui.q = e.target.value; clearTimeout(qTimer);
+  qTimer = setTimeout(() => { const pos = e.target.selectionStart; render(); const q = document.getElementById("q"); if (q) { q.focus(); q.setSelectionRange(pos, pos); } }, 180);
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && drawer) closeDrawer(); });
+window.addEventListener("hashchange", () => { ui.q = ""; ui.status = ""; ui.src = ""; ui.sev = ""; ui.grp = ""; ui.cst = ""; ui.lvl = ""; if (route() !== "risks") { ui.cell = null; ui.cat = ""; ui.band = ""; } closeDrawer(); render(); });
+
+/* ---------- Store ---------- */
+// Standalone mode (opened from a file or a plain web host): keep records in this browser's localStorage
+const LOCAL_KEY = "riskledger-data-v1";
+let localSaved = false;
+function saveLocal() {
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(Object.fromEntries(KINDS.map(k => [k, state[k]])))); localSaved = true; } catch { localSaved = false; }
+}
+function startLocal() {
+  mode = "local";
+  try { const raw = localStorage.getItem(LOCAL_KEY); if (raw) { const d = JSON.parse(raw); KINDS.forEach(k => { if (Array.isArray(d[k])) state[k] = d[k]; }); } localSaved = true; } catch { localSaved = false; }
+  KINDS.forEach(k => { loaded[k] = true; });
+  render();
+}
+async function init() {
+  render();
+  const c = window.claude;
+  if (!c || typeof c.use !== "function") { startLocal(); return; }
+  try { db = await c.use("db"); } catch { db = null; }
+  if (!db) { startLocal(); return; }
+  mode = "live";
+  try {
+    userNs = await c.use("user");
+    if (userNs) {
+      const w = await userNs.can("data.write"); if (w === false) canWrite = false;
+      const v = await userNs.me();
+      Object.assign(me, { id: v.id, isOwner: v.isOwner, canEdit: v.canEdit, name: v.name, avatarUrl: v.avatarUrl });
+    }
+  } catch {}
+  // Record that this person opened RiskLedger today, so admins can pick them when assigning roles
+  if (me.id && canWrite) {
+    const ref = db.collection("visitors").doc(me.id);
+    ref.get().then(s => { if (!s.exists || (s.data() || {}).lastSeen !== todayStr) return ref.set({ lastSeen: todayStr }); }).catch(() => {});
+  }
+  const timer = setTimeout(() => { slowNote = true; render(); }, 10000);
+  KINDS.forEach(kind => {
+    db.collection(kind).onSnapshot(snap => {
+      state[kind] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (!snap.metadata.fromCache) loaded[kind] = true;
+      if (KINDS.every(k => loaded[k])) { clearTimeout(timer); slowNote = false; }
+      render();
+    }, err => {
+      loaded[kind] = true;
+      if (err.code === "revoked" || err.code === "not_granted") canWrite = false;
+      render();
+    });
+  });
+  render();
+}
+init();
+</script>

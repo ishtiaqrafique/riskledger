@@ -1,0 +1,19 @@
+# CIS Controls content is licensed by the Center for Internet Security (CC BY-NC-ND 4.0).
+# Never commit CIS workbooks or exports to this public repository; import your own copy in the app.
+*CIS*.csv
+*CIS*.xlsx
+*cis*.csv
+*cis*.xlsx
+data/cis*
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# Local scratch
+*.log
+tmp/

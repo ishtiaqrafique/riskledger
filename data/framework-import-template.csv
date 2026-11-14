@@ -1,0 +1,4 @@
+Code,Title,Group,Category,Description,Level
+POL-01,Information security policy approved by management,Governance,Policies,The policy is reviewed every year and approved by the management committee.,Core
+POL-02,Acceptable use policy acknowledged by all staff,Governance,Policies,,Core
+ACC-01,Privileged accounts reviewed every quarter,Access,Accounts,Review evidence is retained for audit.,Enhanced
