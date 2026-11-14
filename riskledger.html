@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RiskLedger ERM</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,16 +15,18 @@
   --font-head: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
   --shadow: 0 10px 40px rgba(20, 32, 48, .18);
+  --s1: #2a78d6; --s2: #eb6834; /* categorical slots 1-2 (internal / external) */
+  --track: color-mix(in srgb, var(--accent) 16%, var(--surface));
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0D131B; --surface: #141C27; --surface-2: #1B2532; --ink: #E4EAF2; --muted: #90A0B4;
   --line: #283445; --accent: #7AA2FF; --accent-ink: #0D131B; --accent-soft: #1E2B45;
-  --low: #3DBB82; --med: #E3B43A; --high: #F08A4B; --crit: #F06464; --shadow: 0 10px 40px rgba(0,0,0,.5);
+  --low: #3DBB82; --med: #E3B43A; --high: #F08A4B; --crit: #F06464; --shadow: 0 10px 40px rgba(0,0,0,.5); --s1: #3987e5; --s2: #d95926;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0D131B; --surface: #141C27; --surface-2: #1B2532; --ink: #E4EAF2; --muted: #90A0B4;
   --line: #283445; --accent: #7AA2FF; --accent-ink: #0D131B; --accent-soft: #1E2B45;
-  --low: #3DBB82; --med: #E3B43A; --high: #F08A4B; --crit: #F06464; --shadow: 0 10px 40px rgba(0,0,0,.5);
+  --low: #3DBB82; --med: #E3B43A; --high: #F08A4B; --crit: #F06464; --shadow: 0 10px 40px rgba(0,0,0,.5); --s1: #3987e5; --s2: #d95926;
   color-scheme: dark; }
 
 * { box-sizing: border-box; }
@@ -66,7 +70,7 @@ main { padding-block: 24px 48px; padding-left: 28px; padding-right: max(28px, en
 .btn:disabled { opacity: .5; cursor: default; }
 
 /* KPI strip */
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
 .kpi { background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
 .kpi .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
 .kpi .val { font-family: var(--font-head); font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -164,6 +168,64 @@ td.title small { display: block; font-weight: 400; color: var(--muted); overflow
 .checks { display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
 .checks label { display: flex; gap: 8px; align-items: baseline; font-size: 13px; font-weight: 400; color: var(--ink); }
 .err { color: var(--crit); font-size: 13px; }
+
+/* Dashboard charts */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 28px; align-items: center; padding: 22px 24px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 9%, var(--surface)), var(--surface) 60%); }
+.hero .lbl, .hero-row .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.hero-main { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.hero-main p { margin: 0; }
+.hero-num { font-family: var(--font-head); font-size: 64px; font-weight: 600; line-height: 1; color: var(--ink); }
+.hero-num span { font-size: 20px; font-weight: 500; color: var(--muted); margin-left: 6px; }
+.hero-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.hero-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.hero-pct { font-family: var(--font-head); font-size: 22px; font-weight: 600; }
+.seg-tall { display: flex; gap: 2px; height: 28px; }
+.seg-tall i { border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-style: normal; font-size: 12.5px; font-weight: 600; min-width: 0; overflow: hidden; cursor: default; }
+.sb-crit, .sb-high, .sb-low { color: #fff; } .sb-med { color: #14181f; }
+.sb-crit { background: var(--crit); } .sb-high { background: var(--high); } .sb-med { background: var(--med); } .sb-low { background: var(--low); }
+.sw-crit { background: var(--crit); } .sw-high { background: var(--high); } .sw-med { background: var(--med); } .sw-low { background: var(--low); }
+.meter { display: block; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
+.meter.big { height: 10px; border-radius: 5px; }
+.meter i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.chart-rows { display: flex; flex-direction: column; gap: 4px; }
+.drow { display: grid; grid-template-columns: minmax(0, 210px) minmax(0, 1fr) 86px; gap: 12px; align-items: center; min-height: 30px; border-radius: 6px; padding: 0 4px; }
+.drow[data-open] { cursor: pointer; } .drow[data-open]:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.drow .dl { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.drow .dv { font-size: 12.5px; text-align: right; font-variant-numeric: tabular-nums; display: flex; gap: 6px; justify-content: flex-end; align-items: center; white-space: nowrap; }
+.dtrack { position: relative; height: 26px; background: linear-gradient(var(--line), var(--line)) 0 50% / 100% 1px no-repeat; }
+.dtrack i { position: absolute; font-style: normal; }
+.dtrack .ln { top: calc(50% - 1px); height: 2px; background: color-mix(in srgb, var(--accent) 45%, var(--muted)); }
+.dtrack .dot { top: 50%; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--surface); cursor: default; z-index: 1; }
+.dtrack .dot::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; }
+.dot.inh, .dk-inh { background: var(--muted); } .dot.res, .dk-res { background: var(--accent); }
+.dtrack .app { top: -2px; bottom: -2px; width: 0; border-left: 2px solid color-mix(in srgb, var(--crit) 70%, transparent); }
+.dk-app { background: var(--crit); width: 3px !important; border-radius: 1px !important; }
+.legend i.dk-inh, .legend i.dk-res { border-radius: 50%; }
+.drow.axis { min-height: 18px; } .drow.axis .dtrack { height: 18px; background: none; }
+.drow.axis b { position: absolute; transform: translateX(-50%); font-size: 11px; font-weight: 400; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.drow.axis b.tlabel { color: var(--ink); font-weight: 600; top: 15px; }
+.drow.axis.two .dtrack { height: 32px; }
+.dtrack .today { top: -4px; bottom: -4px; width: 0; border-left: 2px solid var(--ink); opacity: .55; }
+.dtrack .tbar { top: 6px; height: 14px; border-radius: 4px; cursor: default; }
+.tbar.act, .sw-act { background: var(--accent); } .tbar.req, .sw-req { background: color-mix(in srgb, var(--accent) 40%, var(--surface)); } .tbar.exp, .sw-exp { background: var(--crit); }
+.pipe { display: flex; flex-direction: column; gap: 8px; }
+.prow { display: grid; grid-template-columns: 150px minmax(0, 1fr) 28px; gap: 10px; align-items: center; font-size: 13px; }
+.prow .num { font-family: var(--font-mono); text-align: right; color: var(--muted); }
+.ptrack { height: 14px; display: block; }
+.ptrack i { display: block; height: 100%; min-width: 2px; background: var(--accent); border-radius: 0 4px 4px 0; cursor: default; }
+.seg-thin { display: flex; gap: 2px; height: 8px; }
+.seg-thin i { border-radius: 4px; cursor: default; }
+.s1, .sw-s1 { background: var(--s1); } .s2, .sw-s2 { background: var(--s2); }
+.sev-row { display: flex; flex-wrap: wrap; gap: 6px; }
+#tip { position: fixed; z-index: 50; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 12px; padding: 5px 9px; border-radius: 6px; max-width: 280px; box-shadow: var(--shadow); }
+@media (max-width: 820px) {
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-num { font-size: 52px; }
+  .drow { grid-template-columns: minmax(0, 96px) minmax(0, 1fr) 64px; gap: 8px; }
+  .prow { grid-template-columns: 112px minmax(0, 1fr) 24px; }
+}
 
 /* People */
 .av { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; background: var(--surface-2); }
@@ -604,7 +666,7 @@ function dashboardHtml() {
     <div class="kpi ${hiRes ? "alert" : ""}"><span class="lbl">High / critical</span><span class="val">${hiRes}</span><span class="sub">residual score ≥ 10</span></div>
     <div class="kpi ${above ? "alert" : ""}"><span class="lbl">Above appetite</span><span class="val">${above}</span><span class="sub">residual &gt; ${APPETITE}</span></div>
     <div class="kpi ${overdue ? "alert" : ""}"><span class="lbl">Overdue actions</span><span class="val">${overdue}</span><span class="sub">${state.actions.filter(a => a.status !== "Done").length} still open</span></div>
-    <div class="kpi"><span class="lbl">Controls effective</span><span class="val">${eff === null ? "—" : eff + "%"}</span><span class="sub">${tested.length} of ${state.controls.length} tested</span></div>
+    <div class="kpi"><span class="lbl">Controls effective</span><span class="val">${eff === null ? "—" : eff + "%"}</span>${eff === null ? "" : `<span class="meter" data-tip="${eff}% of tested controls are effective"><i style="width:${eff}%"></i></span>`}<span class="sub">${tested.length} of ${state.controls.length} tested</span></div>
     <div class="kpi ${exList.expired ? "alert" : ""}"><span class="lbl">Active exceptions</span><span class="val">${exList.active}</span><span class="sub">${exList.expired ? `${exList.expired} expired · ` : ""}${exList.soon} expire in 30 days</span></div>
     <div class="kpi ${overdueF ? "alert" : ""}"><span class="lbl">Open audit findings</span><span class="val">${openF.length}</span><span class="sub">${overdueF} overdue · ${extF} external</span></div>
     <div class="kpi"><span class="lbl">Open incidents</span><span class="val">${openInc.length}</span><span class="sub">${loss.toLocaleString()} total loss</span></div>
@@ -649,19 +711,98 @@ function dashboardHtml() {
   const compHtml = `<section class="panel"><div class="panel-head"><h2>Compliance by framework</h2><a href="#compliance" class="mono">Compliance →</a></div>
     <div>${fwsSorted.length ? fwsSorted.map(fw => { const s = stats(fwStatus(fw, A));
       return `<div class="fw-line" data-fw-go="${esc(fw.id)}"><strong>${esc(fw.name)}</strong><span class="num">${s.pct === null ? "—" : s.pct + "%"}</span>${stackBar(s)}<span></span><span class="meta">${s.assessed} of ${s.total} assessed · ${state.findings.filter(f => findingOpen(f) && String(f.reqKey || "").startsWith(fw.id + "~")).length} open findings</span></div>`; }).join("")
-      : `<div class="empty-note">No frameworks yet. Import NIST CSF 2.0 or CIS Controls on the Compliance page.</div>`}</div></section>`;
+      : `<div class="empty-note">No frameworks yet. Import NIST CSF 2.0 or CIS Controls on the Compliance page.</div>`}</div>
+    ${(() => { // Breakdown by function/group for the most-assessed framework with a short group list
+      const fw = [...fwsSorted].filter(f => new Set((f.requirements || []).map(r => r.group)).size <= 8)
+        .sort((a, b) => stats(fwStatus(b, A)).assessed - stats(fwStatus(a, A)).assessed)[0];
+      if (!fw) return "";
+      const reqs = fw.requirements || [], groups = [...new Set(reqs.map(r => r.group))];
+      const stOf = r => (A[reqDocKey(fw.id, r.code)] || {}).status || "Not assessed";
+      return `<div class="hero-row"><span class="lbl">${esc(fw.name)} by ${fw.id === "nist-csf-2" ? "function" : "group"}</span><span class="meta">compliant %</span></div>
+        <div class="pipe">${groups.map(g => { const s = stats(reqs.filter(r => r.group === g).map(stOf)); const name = (fw.groups && fw.groups[g]) || g;
+          return `<div class="prow" data-fw-go="${esc(fw.id)}" style="cursor:pointer" data-tip="${esc(name)}: ${s.c["Compliant"]} compliant, ${s.c["Partially compliant"]} partial, ${s.c["Non-compliant"]} non-compliant, ${s.c["Not assessed"]} not assessed"><span>${esc(trunc(name, 22))}</span>${stackBar(s)}<span class="num">${s.pct === null ? "—" : s.pct + "%"}</span></div>`; }).join("")}</div>
+        <div class="legend">${REQ_STATUSES.map(k => `<span><i style="background:${ST_COLOR[k]}"></i>${k}</span>`).join("")}</div>`;
+    })()}</section>`;
 
   const cats = CATEGORIES.map(c => { const rs = open.filter(r => r.category === c); return { c, rs }; }).filter(x => x.rs.length);
   const maxC = Math.max(1, ...cats.map(x => x.rs.length));
   const catHtml = `<section class="panel"><div class="panel-head"><h2>Open risks by category</h2></div>
     <div class="bars">${cats.length ? cats.map(({ c, rs }) => {
       const parts = ["crit", "high", "med", "low"].map(b => [b, rs.filter(r => band(score(r, "residual")) === b && score(r, "residual")).length]);
-      return `<div class="bar"><span>${esc(c)}</span><div class="track" style="width:${(rs.length / maxC) * 100}%">${parts.map(([b, n]) => n ? `<i style="flex:${n};background:var(--${b})" title="${BAND_NAME[b]}: ${n}"></i>` : "").join("")}${rs.filter(r => !score(r, "residual")).length ? `<i style="flex:${rs.filter(r => !score(r, "residual")).length};background:var(--line)"></i>` : ""}</div><span class="num">${rs.length}</span></div>`;
+      return `<div class="bar"><span>${esc(c)}</span><div class="track" style="width:${(rs.length / maxC) * 100}%">${parts.map(([b, n]) => n ? `<i style="flex:${n};background:var(--${b})" data-tip="${esc(c)} · ${BAND_NAME[b]}: ${n}"></i>` : "").join("")}${rs.filter(r => !score(r, "residual")).length ? `<i style="flex:${rs.filter(r => !score(r, "residual")).length};background:var(--line)"></i>` : ""}</div><span class="num">${rs.length}</span></div>`;
     }).join("") : `<div class="empty-note">Categories appear here once risks are added.</div>`}</div></section>`;
+
+  // ---- Hero: residual posture (one headline figure + tall segmented bar of residual bands)
+  const rated = open.filter(r => score(r, "residual"));
+  const inhTotal = open.reduce((s, r) => s + score(r, "inherent"), 0), resTotal = open.reduce((s, r) => s + score(r, "residual"), 0);
+  const cut = inhTotal ? Math.round(100 * (inhTotal - resTotal) / inhTotal) : 0;
+  const bandsOrder = [["crit", "Critical"], ["high", "High"], ["med", "Medium"], ["low", "Low"]];
+  const bandCounts = bandsOrder.map(([b, name]) => ({ b, name, n: rated.filter(r => band(score(r, "residual")) === b).length }));
+  const heroHtml = `<section class="panel hero">
+    <div class="hero-main"><span class="lbl">Risks above appetite</span>
+      <div class="hero-num">${above}<span> of ${open.length} open</span></div>
+      <p class="meta">Residual score above ${APPETITE} after controls. ${hiRes} rated high or critical.</p></div>
+    <div class="hero-side">
+      <div class="hero-row"><span class="lbl">Residual risk by level</span><span class="meta">${rated.length} rated risks</span></div>
+      ${rated.length ? `<div class="seg-tall" role="img" aria-label="${bandCounts.map(x => `${x.name} ${x.n}`).join(", ")}">${bandCounts.filter(x => x.n).map(x => `<i class="sb-${x.b}" style="flex:${x.n}" data-tip="${x.name}: ${x.n} risk${x.n === 1 ? "" : "s"} (${Math.round(100 * x.n / rated.length)}%)">${x.n}</i>`).join("")}</div>
+      <div class="legend">${bandCounts.map(x => `<span><i class="sw-${x.b}"></i>${x.name}</span>`).join("")}</div>` : `<div class="empty-note">Rate a risk to see the split.</div>`}
+      <div class="hero-row"><span class="lbl">Risk reduced by controls</span><span class="hero-pct">${inhTotal ? cut + "%" : "—"}</span></div>
+      <span class="meter big" data-tip="Total inherent score ${inhTotal} → residual ${resTotal}"><i style="width:${Math.max(0, Math.min(100, cut))}%"></i></span>
+      <span class="meta">Total score ${inhTotal} inherent → ${resTotal} residual across open risks</span></div>
+  </section>`;
+
+  // ---- Dumbbell: inherent → residual per risk, with the appetite line
+  const dRisks = [...rated].sort((a, b) => score(b, "residual") - score(a, "residual") || score(b, "inherent") - score(a, "inherent")).slice(0, 8);
+  const pos = v => `${(v / 25) * 100}%`;
+  const dumbHtml = `<section class="panel"><div class="panel-head"><div><h2>Control effect by risk</h2><div class="meta">Score before controls → after controls (1–25)</div></div>
+      <div class="legend"><span><i class="dk-inh"></i>Inherent</span><span><i class="dk-res"></i>Residual</span><span><i class="dk-app"></i>Appetite ${APPETITE}</span></div></div>
+    ${dRisks.length ? `<div class="chart-rows">${dRisks.map(r => { const si = score(r, "inherent"), sr = score(r, "residual"), lo = Math.min(si, sr), hi = Math.max(si, sr);
+      return `<div class="drow" data-open="risks:${r.id}"><span class="dl"><span class="mono">${esc(r.ref)}</span> ${esc(trunc(r.title, 34))}</span>
+        <span class="dtrack"><i class="app" style="left:${pos(APPETITE)}"></i><i class="ln" style="left:${pos(lo)};width:calc(${pos(hi)} - ${pos(lo)})"></i>
+          <i class="dot inh" style="left:${pos(si)}" data-tip="${esc(r.ref)} inherent: ${si} (${BAND_NAME[band(si)]})"></i><i class="dot res" style="left:${pos(sr)}" data-tip="${esc(r.ref)} residual: ${sr} (${BAND_NAME[band(sr)]})"></i></span>
+        <span class="dv">${si} → <strong>${sr}</strong>${sr > APPETITE ? `<span class="tag warn">Above</span>` : ""}</span></div>`; }).join("")}
+      <div class="drow axis"><span></span><span class="dtrack">${[0, 5, 10, 15, 20, 25].map(t => `<b style="left:${pos(t)}">${t}</b>`).join("")}</span><span></span></div></div>`
+      : `<div class="empty-note">Rated risks appear here.</div>`}</section>`;
+
+  // ---- Audit findings: pipeline by status + internal/external split + open by severity
+  const fTotal = state.findings.length, fMax = Math.max(1, ...FINDING_STATUS.map(s => state.findings.filter(f => (f.status || "Open") === s).length));
+  const fInt = state.findings.filter(f => !isExternal(f.source)).length, fExt = fTotal - fInt;
+  const sevOpen = ["Critical", "High", "Medium", "Low"].map(s => [s, openF.filter(f => f.severity === s).length]);
+  const findHtml = `<section class="panel"><div class="panel-head"><div><h2>Audit findings</h2><div class="meta">${fTotal} raised · ${openF.length} open · ${overdueF} overdue</div></div><a href="#findings" class="mono">Findings →</a></div>
+    ${fTotal ? `<div class="pipe">${FINDING_STATUS.map(s => { const n = state.findings.filter(f => (f.status || "Open") === s).length;
+      return `<div class="prow"><span>${s}</span><span class="ptrack"><i style="width:${(n / fMax) * 100}%" data-tip="${s}: ${n}"></i></span><span class="num">${n}</span></div>`; }).join("")}</div>
+      <div class="hero-row"><span class="lbl">Source</span><span class="meta">${fInt} internal · ${fExt} external</span></div>
+      <div class="seg-thin" role="img" aria-label="Internal ${fInt}, external ${fExt}">${fInt ? `<i class="s1" style="flex:${fInt}" data-tip="Internal: ${fInt}"></i>` : ""}${fExt ? `<i class="s2" style="flex:${fExt}" data-tip="External: ${fExt}"></i>` : ""}</div>
+      <div class="legend"><span><i class="sw-s1"></i>Internal audit &amp; self-assessment</span><span><i class="sw-s2"></i>External, regulator &amp; certification</span></div>
+      <div class="sev-row">${sevOpen.map(([s, n]) => `<span class="pill ${n ? SEV_CLS[s] : "p-neutral"}"><span class="sc">${n}</span>${s} open</span>`).join("")}</div>`
+      : `<div class="empty-note">No audit findings yet.</div>`}</section>`;
+
+  // ---- Exception timeline: validity window per exception, with today marked
+  const exs = state.exceptions.filter(e => e.startDate && e.expiryDate && exState(e) !== "Rejected" && exState(e) !== "Closed");
+  let exHtml;
+  if (exs.length) {
+    const t = s => new Date(s + "T00:00:00").getTime();
+    const lo = Math.min(t(todayStr), ...exs.map(e => t(e.startDate))), hi = Math.max(t(todayStr), ...exs.map(e => t(e.expiryDate)));
+    const span = Math.max(1, hi - lo), px = s => `${((t(s) - lo) / span) * 100}%`;
+    const months = []; const d0 = new Date(lo); d0.setDate(1); d0.setMonth(d0.getMonth() + 1);
+    const stepM = span > 400 * 864e5 ? 4 : span > 200 * 864e5 ? 3 : 2;
+    for (const d = new Date(d0); d.getTime() <= hi; d.setMonth(d.getMonth() + stepM)) months.push(new Date(d));
+    exHtml = `<section class="panel"><div class="panel-head"><div><h2>Risk exceptions timeline</h2><div class="meta">Approval window of each exception · today marked</div></div>
+        <div class="legend"><span><i class="sw-act"></i>Approved</span><span><i class="sw-req"></i>Requested</span><span><i class="sw-exp"></i>Expired</span></div></div>
+      <div class="chart-rows">${exs.sort((a, b) => a.expiryDate.localeCompare(b.expiryDate)).map(e => { const st = exState(e);
+        return `<div class="drow" data-open="exceptions:${e.id}"><span class="dl"><span class="mono">${esc(e.ref)}</span> ${esc(trunc(e.title, 30))}</span>
+          <span class="dtrack"><i class="today" style="left:${px(todayStr)}"></i><i class="tbar ${st === "Expired" ? "exp" : st === "Requested" ? "req" : "act"}" style="left:${px(e.startDate)};width:calc(${px(e.expiryDate)} - ${px(e.startDate)})" data-tip="${esc(e.ref)} · ${st} · ${fmtDate(e.startDate)} – ${fmtDate(e.expiryDate)}"></i></span>
+          <span class="dv">${st === "Expired" ? `<span class="tag warn">Expired</span>` : exExpiringSoon(e) ? `<span class="tag warn">Soon</span>` : `<span class="meta">${fmtDate(e.expiryDate).replace(/^\d+ /, "")}</span>`}</span></div>`; }).join("")}
+        <div class="drow axis two"><span></span><span class="dtrack">${months.filter(m => Math.abs(m.getTime() - t(todayStr)) / span > 0.08).map(m => `<b style="left:${((m.getTime() - lo) / span) * 100}%">${m.toLocaleDateString("en-GB", { month: "short", year: "2-digit" })}</b>`).join("")}<b class="tlabel" style="left:${px(todayStr)}">Today</b></span><span></span></div></div></section>`;
+  } else exHtml = `<section class="panel"><div class="panel-head"><h2>Risk exceptions timeline</h2></div><div class="empty-note">Exceptions with start and expiry dates appear here.</div></section>`;
 
   return `<div class="page-head"><div><h1>Risk dashboard</h1><p>Where the organisation's exposure sits today, measured against a residual appetite of ${APPETITE}.</p></div>
     ${canDo("risks") ? `<button class="btn primary" data-new="risks">New risk</button>` : ""}</div>
-    ${kpis}<div class="grid-2">${heat}<div style="display:flex;flex-direction:column;gap:20px;min-width:0">${topHtml}${catHtml}</div></div><div class="grid-2">${dueHtml}${compHtml}</div>`;
+    ${heroHtml}${kpis}
+    <div class="grid-2">${heat}${dumbHtml}</div>
+    <div class="grid-2">${compHtml}${findHtml}</div>
+    <div class="grid-2">${exHtml}${catHtml}</div>
+    <div class="grid-2">${topHtml}${dueHtml}</div>`;
 }
 
 function complianceHtml() {
@@ -1238,6 +1379,26 @@ document.addEventListener("input", e => {
   qTimer = setTimeout(() => { const pos = e.target.selectionStart; render(); const q = document.getElementById("q"); if (q) { q.focus(); q.setSelectionRange(pos, pos); } }, 180);
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && drawer) closeDrawer(); });
+// Chart tooltips: any element with data-tip shows it on hover or keyboard focus
+const tipEl = document.createElement("div"); tipEl.id = "tip"; tipEl.hidden = true; tipEl.setAttribute("role", "tooltip");
+document.body.appendChild(tipEl);
+function placeTip(x, y) {
+  const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  tipEl.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x + 12)) + "px";
+  tipEl.style.top = Math.max(8, y - h - 12) + "px";
+}
+document.addEventListener("mouseover", e => {
+  const el = e.target.closest && e.target.closest("[data-tip]");
+  if (!el) { tipEl.hidden = true; return; }
+  tipEl.textContent = el.dataset.tip; tipEl.hidden = false; placeTip(e.clientX, e.clientY);
+});
+document.addEventListener("mousemove", e => { if (!tipEl.hidden) placeTip(e.clientX, e.clientY); });
+document.addEventListener("focusin", e => {
+  const el = e.target.closest && e.target.closest("[data-tip]"); if (!el) return;
+  const r = el.getBoundingClientRect(); tipEl.textContent = el.dataset.tip; tipEl.hidden = false; placeTip(r.left + r.width / 2, r.top);
+});
+document.addEventListener("focusout", () => { tipEl.hidden = true; });
+window.addEventListener("scroll", () => { tipEl.hidden = true; }, true);
 window.addEventListener("hashchange", () => { ui.q = ""; ui.status = ""; ui.src = ""; ui.sev = ""; ui.grp = ""; ui.cst = ""; ui.lvl = ""; if (route() !== "risks") { ui.cell = null; ui.cat = ""; ui.band = ""; } closeDrawer(); render(); });
 
 /* ---------- Store ---------- */
